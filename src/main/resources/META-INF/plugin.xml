@@ -1,0 +1,99 @@
+<idea-plugin>
+    <id>com.hdl.verilog-vivado-plugin</id>
+    <name>Verilog and Vivado Support</name>
+    <vendor email="support@hdl.com" url="http://www.hdl.com">HDL Development Team</vendor>
+
+    <description><![CDATA[
+    IntelliJ plugin for Verilog development with Vivado integration.<br>
+    <br>
+    Features:<br>
+    <ul>
+        <li>Verilog syntax highlighting and auto-completion</li>
+        <li>Generalized linter interface with iverilog support</li>
+        <li>Vivado integration for IP composition, project building, and management</li>
+        <li>Configurable Vivado path, board, and part settings</li>
+    </ul>
+  ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Verilog Language Support -->
+        <fileType name="Verilog"
+                  implementationClass="com.hdl.verilog.VerilogFileType"
+                  fieldName="INSTANCE"
+                  language="Verilog"
+                  extensions="v;vh;sv;svh"/>
+        
+        <lang.parserDefinition language="Verilog"
+                               implementationClass="com.hdl.verilog.VerilogParserDefinition"/>
+        
+        <lang.syntaxHighlighterFactory language="Verilog"
+                                       implementationClass="com.hdl.verilog.VerilogSyntaxHighlighterFactory"/>
+        
+        <lang.commenter language="Verilog"
+                       implementationClass="com.hdl.verilog.VerilogCommenter"/>
+        
+        <lang.braceMatcher language="Verilog"
+                          implementationClass="com.hdl.verilog.VerilogBraceMatcher"/>
+        
+        <completion.contributor language="Verilog"
+                               implementationClass="com.hdl.verilog.VerilogCompletionContributor"/>
+
+        <!-- External Annotator for Linting -->
+        <externalAnnotator language="Verilog"
+                          implementationClass="com.hdl.verilog.linter.VerilogExternalAnnotator"/>
+
+        <!-- Settings -->
+        <projectConfigurable parentId="tools"
+                           instance="com.hdl.vivado.VivadoSettingsConfigurable"
+                           id="com.hdl.vivado.VivadoSettingsConfigurable"
+                           displayName="Vivado Settings"/>
+        
+        <projectService serviceImplementation="com.hdl.vivado.VivadoSettingsState"/>
+        <projectService serviceImplementation="com.hdl.verilog.linter.LinterSettingsState"/>
+
+        <!-- Notification Group -->
+        <notificationGroup id="Vivado" displayType="BALLOON"/>
+    </extensions>
+
+    <actions>
+        <!-- Vivado Actions -->
+        <group id="VivadoActionGroup" text="Vivado" description="Vivado operations" popup="true">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+
+            <action id="com.hdl.vivado.IPComposerAction"
+                    class="com.hdl.vivado.actions.IPComposerAction"
+                    text="Launch Vivado IP Composer"
+                    description="Launch Vivado for IP composition">
+            </action>
+
+            <action id="com.hdl.vivado.BuildProjectAction"
+                    class="com.hdl.vivado.actions.BuildProjectAction"
+                    text="Build Vivado Project"
+                    description="Build Vivado project from HDL files in this folder">
+            </action>
+
+            <action id="com.hdl.vivado.OpenProjectAction"
+                    class="com.hdl.vivado.actions.OpenProjectAction"
+                    text="Open Vivado Project"
+                    description="Open existing Vivado project">
+            </action>
+
+            <action id="com.hdl.vivado.SynthesisAction"
+                    class="com.hdl.vivado.actions.SynthesisAction"
+                    text="Run Synthesis"
+                    description="Run synthesis on the current design">
+            </action>
+        </group>
+        
+        <!-- Linter Actions -->
+        <action id="com.hdl.verilog.SelectTopFolderAction"
+                class="com.hdl.verilog.actions.SelectTopFolderAction"
+                text="Set as Verilog Top Folder"
+                description="Set this folder as the top folder for linting">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="VivadoActionGroup"/>
+        </action>
+    </actions>
+</idea-plugin>
