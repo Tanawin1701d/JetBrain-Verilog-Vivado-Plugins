@@ -1,53 +1,85 @@
 package com.hdl.verilog.linter
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.openapi.util.io.FileUtil
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStreamReader
+import java.nio.charset.StandardCharsets
 
 /**
  * Icarus Verilog (iverilog) linter implementation
  */
 class IcarusVerilogLinter : VerilogLinter {
+    private val LOG = Logger.getInstance(IcarusVerilogLinter::class.java)
     override val name: String = "iverilog"
 
     override fun isAvailable(): Boolean {
         return try {
             val process = ProcessBuilder("iverilog", "-V").start()
-            process.waitFor()
-            process.exitValue() == 0
+            val result = process.waitFor()
+            result == 0
         } catch (e: Exception) {
+            // Log or handle the exception appropriately in a real-world scenario
             false
         }
     }
 
-    override fun lint(file: VirtualFile, topFolder: VirtualFile?): List<LintResult> {
+    override fun lint(file: VirtualFile, content: String, topFolder: VirtualFile?): List<LintResult> {
         val results = mutableListOf<LintResult>()
+        var tempFile: File? = null
         
         try {
-            val command = mutableListOf("iverilog", "-t", "null")
+            // Create a temporary file with the current content to handle unsaved changes
+            // We use the same extension as the original file
+            tempFile = FileUtil.createTempFile("linter_", "." + file.extension, true)
+            FileUtil.writeToFile(tempFile, content)
             
-            // Add all .v and .sv files in the top folder if specified
+            val commandLine = GeneralCommandLine("iverilog", "-t", "null")
+            
             if (topFolder != null) {
                 val allVerilogFiles = collectVerilogFiles(topFolder)
-                command.addAll(allVerilogFiles.map { it.path })
+                for (vFile in allVerilogFiles) {
+                    if (vFile.path == file.path) {
+                        // Use the temporary file instead of the actual file on disk
+                        commandLine.addParameter(tempFile.absolutePath)
+                    } else {
+                        commandLine.addParameter(vFile.path)
+                    }
+                }
             } else {
-                command.add(file.path)
+                commandLine.addParameter(tempFile.absolutePath)
             }
 
-            val processBuilder = ProcessBuilder(command)
-            processBuilder.redirectErrorStream(true)
-            val process = processBuilder.start()
-
-            val reader = BufferedReader(InputStreamReader(process.inputStream))
-            var line: String?
+            LOG.info("Running iverilog linter: ${commandLine.commandLineString}")
             
-            while (reader.readLine().also { line = it } != null) {
-                line?.let { parseLintOutput(it, results) }
+            val process = commandLine.createProcess()
+            val reader = BufferedReader(InputStreamReader(process.inputStream, StandardCharsets.UTF_8))
+            val errorReader = BufferedReader(InputStreamReader(process.errorStream, StandardCharsets.UTF_8))
+
+            // Read both streams
+            fun readStream(streamReader: BufferedReader) {
+                var line: String?
+                while (streamReader.readLine().also { line = it } != null) {
+                    line?.let {
+                        LOG.info("iverilog output: $it")
+                        parseLintOutput(it, results, file.path, tempFile.absolutePath)
+                    }
+                }
             }
 
-            process.waitFor()
+            readStream(reader)
+            readStream(errorReader)
+
+            val exitCode = process.waitFor()
+            LOG.info("iverilog finished with exit code: $exitCode")
+            
             reader.close()
+            errorReader.close()
         } catch (e: Exception) {
+            LOG.error("Failed to run iverilog", e)
             results.add(
                 LintResult(
                     file = file.path,
@@ -56,6 +88,8 @@ class IcarusVerilogLinter : VerilogLinter {
                     message = "Failed to run iverilog: ${e.message}"
                 )
             )
+        } finally {
+            tempFile?.delete()
         }
 
         return results
@@ -78,22 +112,31 @@ class IcarusVerilogLinter : VerilogLinter {
         return files
     }
 
-    private fun parseLintOutput(line: String, results: MutableList<LintResult>) {
+    private fun parseLintOutput(line: String, results: MutableList<LintResult>, originalFilePath: String, tempFilePath: String) {
         // iverilog output format: file:line: error/warning: message
-        val regex = Regex("""^(.+):(\d+):\s*(error|warning):\s*(.+)$""")
+        // Using a more flexible regex that handles potential column numbers and variations in spacing
+        val regex = Regex("""^(.+?):(\d+)(?::\d+)?:\s*(error|warning):\s*(.+)$""", RegexOption.IGNORE_CASE)
         val match = regex.find(line)
 
         if (match != null) {
-            val (file, lineNum, severityStr, message) = match.destructured
+            val (filePath, lineNum, severityStr, message) = match.destructured
             val severity = when (severityStr.lowercase()) {
                 "error" -> LintResult.Severity.ERROR
                 "warning" -> LintResult.Severity.WARNING
                 else -> LintResult.Severity.INFO
             }
 
+            // Convert path back to original path if it's the temp file
+            val absolutePath = File(filePath).absolutePath
+            val finalPath = if (absolutePath == File(tempFilePath).absolutePath) {
+                originalFilePath
+            } else {
+                absolutePath
+            }
+
             results.add(
                 LintResult(
-                    file = file,
+                    file = finalPath,
                     line = lineNum.toIntOrNull() ?: 0,
                     severity = severity,
                     message = message

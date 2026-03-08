@@ -60,32 +60,12 @@
 
     <actions>
         <!-- Vivado Actions -->
-        <group id="VivadoActionGroup" text="Vivado" description="Vivado operations" popup="true">
+        <group id="VivadoActionGroup"
+               class="com.hdl.vivado.actions.VivadoActionGroup"
+               text="Vivado"
+               description="Vivado operations"
+               popup="true">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-
-            <action id="com.hdl.vivado.IPComposerAction"
-                    class="com.hdl.vivado.actions.IPComposerAction"
-                    text="Launch Vivado IP Composer"
-                    description="Launch Vivado for IP composition">
-            </action>
-
-            <action id="com.hdl.vivado.BuildProjectAction"
-                    class="com.hdl.vivado.actions.BuildProjectAction"
-                    text="Build Vivado Project"
-                    description="Build Vivado project from HDL files in this folder">
-            </action>
-
-            <action id="com.hdl.vivado.OpenProjectAction"
-                    class="com.hdl.vivado.actions.OpenProjectAction"
-                    text="Open Vivado Project"
-                    description="Open existing Vivado project">
-            </action>
-
-            <action id="com.hdl.vivado.SynthesisAction"
-                    class="com.hdl.vivado.actions.SynthesisAction"
-                    text="Run Synthesis"
-                    description="Run synthesis on the current design">
-            </action>
         </group>
         
         <!-- Linter Actions -->

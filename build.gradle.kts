@@ -16,11 +16,10 @@ repositories {
 
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity("2024.3.1.1")
+        intellijIdeaCommunity("2025.1")
         bundledPlugin("com.intellij.java")
         pluginVerifier()
         zipSigner()
-        instrumentationTools()
     }
     testImplementation(kotlin("test"))
 }

@@ -19,11 +19,12 @@ interface VerilogLinter {
 
     /**
      * Lint a Verilog file
-     * @param file The file to lint
+     * @param file The file to lint (VirtualFile for metadata and path)
+     * @param content The actual content of the file (to handle unsaved changes)
      * @param topFolder The top folder for context (all files in this folder are accessible)
      * @return List of lint results
      */
-    fun lint(file: VirtualFile, topFolder: VirtualFile?): List<LintResult>
+    fun lint(file: VirtualFile, content: String, topFolder: VirtualFile?): List<LintResult>
 }
 
 /**

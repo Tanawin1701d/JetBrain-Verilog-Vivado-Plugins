@@ -3,12 +3,14 @@ package com.hdl.verilog.linter
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.hdl.verilog.VerilogFile
 
 class VerilogExternalAnnotator : ExternalAnnotator<PsiFile, List<LintResult>>() {
+    private val LOG = Logger.getInstance(VerilogExternalAnnotator::class.java)
     
     private val linters = listOf<VerilogLinter>(
         IcarusVerilogLinter()
@@ -30,9 +32,15 @@ class VerilogExternalAnnotator : ExternalAnnotator<PsiFile, List<LintResult>>() 
 
         val results = mutableListOf<LintResult>()
         
+        LOG.info("Starting linting for: ${virtualFile.path}")
+        val fileContent = collectedInfo.text
         for (linter in linters) {
             if (linter.isAvailable()) {
-                results.addAll(linter.lint(virtualFile, topFolder))
+                val linterResults = linter.lint(virtualFile, fileContent, topFolder)
+                LOG.info("Linter ${linter.name} returned ${linterResults.size} results")
+                results.addAll(linterResults)
+            } else {
+                LOG.warn("Linter ${linter.name} is not available")
             }
         }
 
@@ -42,8 +50,12 @@ class VerilogExternalAnnotator : ExternalAnnotator<PsiFile, List<LintResult>>() 
     override fun apply(file: PsiFile, annotationResult: List<LintResult>?, holder: AnnotationHolder) {
         if (annotationResult == null) return
 
+        val virtualFilePath = file.virtualFile?.path ?: return
+        val absoluteVirtualFilePath = java.io.File(virtualFilePath).absolutePath
+
         for (result in annotationResult) {
-            if (result.file != file.virtualFile?.path) continue
+            val resultFilePath = java.io.File(result.file).absolutePath
+            if (resultFilePath != absoluteVirtualFilePath) continue
             
             val line = maxOf(0, result.line - 1)
             if (line >= file.textLength) continue

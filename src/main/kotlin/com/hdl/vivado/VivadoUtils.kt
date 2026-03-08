@@ -3,6 +3,7 @@ package com.hdl.vivado
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
+import java.io.IOException
 
 object VivadoUtils {
     
@@ -21,6 +22,35 @@ object VivadoUtils {
         
         traverse(folder)
         return files
+    }
+
+    fun genAddFilesCommand(files: List<VirtualFile>): String {
+        return "add_files -norecurse {" + files.joinToString(separator = " ") { it.path } + "}"
+    }
+
+    fun genTclCreatePrjAndAddFilesCommand(
+        prjName: String,
+        prjPath: String,
+        part   : String,
+        board : String,
+        files: List<VirtualFile>): String {
+
+        val boardSettingCmd = if (board.isNotBlank())
+                              "set_property board_part ${board} [current_project]" else ""
+         
+
+        val tclScript = """
+        # create project
+        create_project ${prjName} ${prjPath} -part ${part}
+        ${boardSettingCmd}
+        # add HDL files
+        ${genAddFilesCommand(files)}
+        # run linter to check the syntax
+        update_compile_order -fileset sources_1
+        synth_design -top [get_property top [current_fileset]] -part ${part} -lint
+        """.trimIndent()
+
+        return tclScript
     }
 
     fun generateVivadoTclScript(
@@ -69,8 +99,21 @@ object VivadoUtils {
         vivadoPath: String,
         workingDirectory: String,
         tclScript: String? = null,
-        mode: String = "gui"
+        mode: String = "gui",
+        deleteIfExists: Boolean = false
     ): Process {
+
+        val dir = File(workingDirectory)
+
+        //// delete if exists
+        if (dir.exists() && deleteIfExists){
+            dir.deleteRecursively()
+        }
+        //// create if not exists
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw IOException("Failed to create working directory: $workingDirectory")
+        }
+
         val command = mutableListOf(vivadoPath)
         
         if (mode == "batch") {
@@ -86,10 +129,12 @@ object VivadoUtils {
             command.add("-source")
             command.add(scriptFile.absolutePath)
         }
+
+        
         
         val processBuilder = ProcessBuilder(command)
         processBuilder.directory(File(workingDirectory))
-        
+
         return processBuilder.start()
     }
 

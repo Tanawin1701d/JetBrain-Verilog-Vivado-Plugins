@@ -4,18 +4,21 @@ import com.hdl.vivado.VivadoSettingsState
 import com.hdl.vivado.VivadoUtils
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.ui.Messages
 import java.io.File
 
-class BuildProjectAction : AnAction() {
-    
+class BuildProjectAction : AnAction("Build Project") {
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
-        
+
         if (!virtualFile.isDirectory) {
             Messages.showErrorDialog(
                 project,
@@ -26,7 +29,7 @@ class BuildProjectAction : AnAction() {
         }
 
         val settings = VivadoSettingsState.getInstance(project)
-        
+
         // Check if Vivado exists
         if (!File(settings.vivadoPath).exists()) {
             Messages.showErrorDialog(
@@ -39,7 +42,7 @@ class BuildProjectAction : AnAction() {
 
         // Collect all HDL files recursively
         val hdlFiles = VivadoUtils.collectHDLFiles(virtualFile)
-        
+
         if (hdlFiles.isEmpty()) {
             Messages.showErrorDialog(
                 project,
@@ -50,25 +53,26 @@ class BuildProjectAction : AnAction() {
         }
 
         try {
-            // Generate project name from folder name
-            val projectName = virtualFile.name + "_vivado"
-            val projectPath = virtualFile.path + "/" + projectName
-            
-            // Generate TCL script
-            val tclScript = VivadoUtils.generateVivadoTclScript(
-                project,
-                projectName,
-                projectPath,
-                hdlFiles,
-                settings
+
+            val prjFolderName = virtualFile.name + "_prj"
+            val vivadoExecDirPath = "${virtualFile.parent.path}/viva_prj_exec"
+
+            val createAndAddFileCmd = VivadoUtils.genTclCreatePrjAndAddFilesCommand(
+                prjFolderName, prjFolderName,
+                settings.part, settings.board, hdlFiles
             )
+
+            val tclScript = """
+                ${createAndAddFileCmd}
+            """.trimIndent()
 
             // Launch Vivado
             VivadoUtils.launchVivado(
                 settings.vivadoPath,
-                virtualFile.path,
+                vivadoExecDirPath,
                 tclScript,
-                mode = "gui"
+                mode = "gui",
+                deleteIfExists = true
             )
 
             NotificationGroupManager.getInstance()
@@ -79,7 +83,7 @@ class BuildProjectAction : AnAction() {
                     NotificationType.INFORMATION
                 )
                 .notify(project)
-                
+
         } catch (ex: Exception) {
             Messages.showErrorDialog(
                 project,

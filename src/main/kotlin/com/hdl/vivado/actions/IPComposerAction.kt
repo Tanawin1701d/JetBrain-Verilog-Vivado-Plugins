@@ -4,18 +4,22 @@ import com.hdl.vivado.VivadoSettingsState
 import com.hdl.vivado.VivadoUtils
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.ui.Messages
 import java.io.File
+import java.io.IOException
 
-class IPComposerAction : AnAction() {
-    
+class IPComposerAction : AnAction("IP Composer") {
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
-        
+
         if (!virtualFile.isDirectory) {
             Messages.showErrorDialog(
                 project,
@@ -26,7 +30,7 @@ class IPComposerAction : AnAction() {
         }
 
         val settings = VivadoSettingsState.getInstance(project)
-        
+
         // Check if Vivado exists
         if (!File(settings.vivadoPath).exists()) {
             Messages.showErrorDialog(
@@ -38,20 +42,35 @@ class IPComposerAction : AnAction() {
         }
 
         try {
+            val folderName = virtualFile.name
+            val prjFolderName = virtualFile.name + "_prj"
+            val ipFolderName = virtualFile.name + "_ip"
+            val vivadoExecDirPath = "${virtualFile.parent.path}/viva_ip_exec"
+            val ipRepoDirPath = "${virtualFile.parent.path}/viva_ip_repo"
+
+            val createAndAddFileCmd = VivadoUtils.genTclCreatePrjAndAddFilesCommand(
+                                        prjFolderName, prjFolderName,
+                                        settings.part, settings.board,
+                                        VivadoUtils.collectHDLFiles(virtualFile))
+
             // Create TCL script for IP Composer
             val tclScript = """
-                # Open IP Catalog
-                create_project -in_memory -part ${settings.part}
-                
-                # User will manually create/configure IP and export
-                puts "IP Composer launched. Please create your IP and click 'Generate' when ready."
+                ${createAndAddFileCmd}
+                # LAUNCH IP COMPOSER
+                ipx::package_project -root_dir ../viva_ip_repo/${ipFolderName} -vendor user.org -library user -taxonomy /UserIP -import_files
             """.trimIndent()
+
+            val repoDir = File(ipRepoDirPath)
+            if (!repoDir.exists() && !repoDir.mkdirs()) {
+                throw IOException("Failed to create working directory: $repoDir")
+            }
 
             VivadoUtils.launchVivado(
                 settings.vivadoPath,
-                virtualFile.path,
+                vivadoExecDirPath,
                 tclScript,
-                mode = "gui"
+                mode = "gui",
+                deleteIfExists = true
             )
 
             NotificationGroupManager.getInstance()
@@ -62,7 +81,7 @@ class IPComposerAction : AnAction() {
                     NotificationType.INFORMATION
                 )
                 .notify(project)
-                
+
         } catch (ex: Exception) {
             Messages.showErrorDialog(
                 project,

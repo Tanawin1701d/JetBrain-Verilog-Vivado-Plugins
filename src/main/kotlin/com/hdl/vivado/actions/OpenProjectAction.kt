@@ -4,20 +4,23 @@ import com.hdl.vivado.VivadoSettingsState
 import com.hdl.vivado.VivadoUtils
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.ui.Messages
 import java.io.File
 
-class OpenProjectAction : AnAction() {
-    
+class OpenProjectAction : AnAction("Open Project") {
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
-        
+
         val settings = VivadoSettingsState.getInstance(project)
-        
+
         // Check if Vivado exists
         if (!File(settings.vivadoPath).exists()) {
             Messages.showErrorDialog(
@@ -61,7 +64,7 @@ class OpenProjectAction : AnAction() {
                     NotificationType.INFORMATION
                 )
                 .notify(project)
-                
+
         } catch (ex: Exception) {
             Messages.showErrorDialog(
                 project,
