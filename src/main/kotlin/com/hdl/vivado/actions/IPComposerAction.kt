@@ -45,8 +45,19 @@ class IPComposerAction : AnAction("IP Composer") {
             val folderName = virtualFile.name
             val prjFolderName = virtualFile.name + "_prj"
             val ipFolderName = virtualFile.name + "_ip"
+            val ipRepoPath = settings.ipRepoPath
+            
+            if (ipRepoPath.isEmpty()) {
+                Messages.showErrorDialog(
+                    project,
+                    "IP Repository Path is not configured. Please set it in Vivado Settings.",
+                    "Configuration Error"
+                )
+                return
+            }
+
             val vivadoExecDirPath = "${virtualFile.parent.path}/viva_ip_exec"
-            val ipRepoDirPath = "${virtualFile.parent.path}/viva_ip_repo"
+            val ipRepoDirPath = ipRepoPath
 
             val createAndAddFileCmd = VivadoUtils.genTclCreatePrjAndAddFilesCommand(
                                         prjFolderName, prjFolderName,
@@ -54,10 +65,12 @@ class IPComposerAction : AnAction("IP Composer") {
                                         VivadoUtils.collectHDLFiles(virtualFile))
 
             // Create TCL script for IP Composer
+            // root_dir should be absolute or relative to where vivado is launched (vivadoExecDirPath)
+            // But usually ipx::package_project -root_dir works best with absolute paths if they are available
             val tclScript = """
                 ${createAndAddFileCmd}
                 # LAUNCH IP COMPOSER
-                ipx::package_project -root_dir ../viva_ip_repo/${ipFolderName} -vendor user.org -library user -taxonomy /UserIP -import_files
+                ipx::package_project -root_dir ${File(ipRepoDirPath, ipFolderName).absolutePath} -vendor user.org -library user -taxonomy /UserIP -import_files
             """.trimIndent()
 
             val repoDir = File(ipRepoDirPath)

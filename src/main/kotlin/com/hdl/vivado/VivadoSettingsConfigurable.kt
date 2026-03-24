@@ -14,6 +14,7 @@ class VivadoSettingsConfigurable(private val project: Project) : Configurable {
     private val vivadoPathField = TextFieldWithBrowseButton()
     private val boardField = JBTextField()
     private val partField = JBTextField()
+    private val ipRepoPathField = TextFieldWithBrowseButton()
 
     override fun getDisplayName(): String = "Vivado Settings"
 
@@ -23,11 +24,13 @@ class VivadoSettingsConfigurable(private val project: Project) : Configurable {
         vivadoPathField.text = settings.vivadoPath
         boardField.text = settings.board
         partField.text = settings.part
+        ipRepoPathField.text = settings.ipRepoPath
 
         settingsPanel = FormBuilder.createFormBuilder()
             .addLabeledComponent(JBLabel("Vivado Path:"), vivadoPathField, 1, false)
             .addLabeledComponent(JBLabel("Board:"), boardField, 1, false)
             .addLabeledComponent(JBLabel("Part:"), partField, 1, false)
+            .addLabeledComponent(JBLabel("IP Repo Path:"), ipRepoPathField, 1, false)
             .addComponentFillVertically(JPanel(), 0)
             .panel
 
@@ -38,7 +41,8 @@ class VivadoSettingsConfigurable(private val project: Project) : Configurable {
         val settings = VivadoSettingsState.getInstance(project)
         return vivadoPathField.text != settings.vivadoPath ||
                boardField.text != settings.board ||
-               partField.text != settings.part
+               partField.text != settings.part ||
+               ipRepoPathField.text != settings.ipRepoPath
     }
 
     override fun apply() {
@@ -46,6 +50,7 @@ class VivadoSettingsConfigurable(private val project: Project) : Configurable {
         settings.vivadoPath = vivadoPathField.text
         settings.board = boardField.text
         settings.part = partField.text
+        settings.ipRepoPath = ipRepoPathField.text
     }
 
     override fun reset() {
@@ -53,5 +58,6 @@ class VivadoSettingsConfigurable(private val project: Project) : Configurable {
         vivadoPathField.text = settings.vivadoPath
         boardField.text = settings.board
         partField.text = settings.part
+        ipRepoPathField.text = settings.ipRepoPath
     }
 }

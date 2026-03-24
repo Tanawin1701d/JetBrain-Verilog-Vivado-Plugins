@@ -14,7 +14,8 @@ class VivadoSettingsState : PersistentStateComponent<VivadoSettingsState.State> 
     data class State(
         var vivadoPath: String = "/tools/Xilinx/Vivado/2023.2/bin/vivado",
         var board: String = "",
-        var part: String = "xc7a35tcpg236-1"
+        var part: String = "xc7a35tcpg236-1",
+        var ipRepoPath: String = ""
     )
 
     private var myState = State()
@@ -35,6 +36,12 @@ class VivadoSettingsState : PersistentStateComponent<VivadoSettingsState.State> 
         get() = myState.part
         set(value) {
             myState.part = value
+        }
+
+    var ipRepoPath: String
+        get() = myState.ipRepoPath
+        set(value) {
+            myState.ipRepoPath = value
         }
 
     override fun getState(): State = myState
