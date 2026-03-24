@@ -22,10 +22,18 @@ interface VerilogLinter {
      * @param file The file to lint (VirtualFile for metadata and path)
      * @param content The actual content of the file (to handle unsaved changes)
      * @param topFolder The top folder for context (all files in this folder are accessible)
-     * @return List of lint results
+     * @return Result object containing the lint results and the raw output
      */
-    fun lint(file: VirtualFile, content: String, topFolder: VirtualFile?): List<LintResult>
+    fun lint(file: VirtualFile, content: String, topFolder: VirtualFile?): LinterOutput
 }
+
+/**
+ * Result of the linting process
+ */
+data class LinterOutput(
+    val results: List<LintResult>,
+    val rawOutput: String
+)
 
 /**
  * Result of linting a file

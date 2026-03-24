@@ -27,8 +27,9 @@ class IcarusVerilogLinter : VerilogLinter {
         }
     }
 
-    override fun lint(file: VirtualFile, content: String, topFolder: VirtualFile?): List<LintResult> {
+    override fun lint(file: VirtualFile, content: String, topFolder: VirtualFile?): LinterOutput {
         val results = mutableListOf<LintResult>()
+        val rawOutput = StringBuilder()
         var tempFile: File? = null
         
         try {
@@ -54,6 +55,7 @@ class IcarusVerilogLinter : VerilogLinter {
             }
 
             LOG.info("Running iverilog linter: ${commandLine.commandLineString}")
+            rawOutput.append("Running: ").append(commandLine.commandLineString).append("\n\n")
             
             val process = commandLine.createProcess()
             val reader = BufferedReader(InputStreamReader(process.inputStream, StandardCharsets.UTF_8))
@@ -65,7 +67,8 @@ class IcarusVerilogLinter : VerilogLinter {
                 while (streamReader.readLine().also { line = it } != null) {
                     line?.let {
                         LOG.info("iverilog output: $it")
-                        parseLintOutput(it, results, file.path, tempFile.absolutePath)
+                        rawOutput.append(it).append("\n")
+                        parseLintOutput(it, results, file.path, tempFile!!.absolutePath)
                     }
                 }
             }
@@ -75,11 +78,13 @@ class IcarusVerilogLinter : VerilogLinter {
 
             val exitCode = process.waitFor()
             LOG.info("iverilog finished with exit code: $exitCode")
+            rawOutput.append("\nExit code: ").append(exitCode).append("\n")
             
             reader.close()
             errorReader.close()
         } catch (e: Exception) {
             LOG.error("Failed to run iverilog", e)
+            rawOutput.append("\nError running iverilog: ").append(e.message).append("\n")
             results.add(
                 LintResult(
                     file = file.path,
@@ -92,7 +97,7 @@ class IcarusVerilogLinter : VerilogLinter {
             tempFile?.delete()
         }
 
-        return results
+        return LinterOutput(results, rawOutput.toString())
     }
 
     private fun collectVerilogFiles(folder: VirtualFile): List<VirtualFile> {
@@ -113,17 +118,21 @@ class IcarusVerilogLinter : VerilogLinter {
     }
 
     private fun parseLintOutput(line: String, results: MutableList<LintResult>, originalFilePath: String, tempFilePath: String) {
-        // iverilog output format: file:line: error/warning: message
-        // Using a more flexible regex that handles potential column numbers and variations in spacing
-        val regex = Regex("""^(.+?):(\d+)(?::\d+)?:\s*(error|warning):\s*(.+)$""", RegexOption.IGNORE_CASE)
+        // iverilog output format: file:line: [error/warning:] message
+        // Using a more flexible regex that handles potential column numbers and optional severity
+        val regex = Regex("""^(.+?):(\d+)(?::\d+)?:\s*(?:(error|warning):\s*)?(.+)$""", RegexOption.IGNORE_CASE)
         val match = regex.find(line)
 
         if (match != null) {
-            val (filePath, lineNum, severityStr, message) = match.destructured
+            val filePath = match.groupValues[1]
+            val lineNum = match.groupValues[2]
+            val severityStr = match.groupValues[3]
+            val message = match.groupValues[4]
+            
             val severity = when (severityStr.lowercase()) {
                 "error" -> LintResult.Severity.ERROR
                 "warning" -> LintResult.Severity.WARNING
-                else -> LintResult.Severity.INFO
+                else -> LintResult.Severity.ERROR // Default to error if not specified (e.g. syntax error)
             }
 
             // Convert path back to original path if it's the temp file

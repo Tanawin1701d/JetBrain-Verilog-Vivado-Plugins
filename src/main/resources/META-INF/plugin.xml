@@ -61,6 +61,11 @@
                     anchor="right" 
                     factoryClass="com.hdl.vivado.VivadoSettingsToolWindowFactory"
                     icon="com.hdl.verilog.VerilogIcons.INSTANCE"/>
+
+        <toolWindow id="Verilog Linter Debugger"
+                    anchor="bottom"
+                    factoryClass="com.hdl.verilog.linter.LinterDebuggerToolWindowFactory"
+                    icon="com.hdl.verilog.VerilogIcons.INSTANCE"/>
     </extensions>
 
     <actions>

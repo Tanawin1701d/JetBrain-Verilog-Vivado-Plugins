@@ -31,18 +31,24 @@ class VerilogExternalAnnotator : ExternalAnnotator<PsiFile, List<LintResult>>() 
         }
 
         val results = mutableListOf<LintResult>()
+        val rawOutput = StringBuilder()
         
         LOG.info("Starting linting for: ${virtualFile.path}")
         val fileContent = collectedInfo.text
         for (linter in linters) {
             if (linter.isAvailable()) {
-                val linterResults = linter.lint(virtualFile, fileContent, topFolder)
-                LOG.info("Linter ${linter.name} returned ${linterResults.size} results")
-                results.addAll(linterResults)
+                val linterOutput = linter.lint(virtualFile, fileContent, topFolder)
+                LOG.info("Linter ${linter.name} returned ${linterOutput.results.size} results")
+                results.addAll(linterOutput.results)
+                rawOutput.append("--- Linter: ${linter.name} ---\n")
+                rawOutput.append(linterOutput.rawOutput).append("\n")
             } else {
                 LOG.warn("Linter ${linter.name} is not available")
+                rawOutput.append("--- Linter: ${linter.name} (Not available) ---\n")
             }
         }
+
+        LinterDebuggerService.getInstance(project).update(rawOutput.toString(), results)
 
         return results
     }
