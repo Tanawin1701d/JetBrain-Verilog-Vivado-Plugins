@@ -99,6 +99,7 @@ object VivadoUtils {
         vivadoPath: String,
         workingDirectory: String,
         tclScript: String? = null,
+        tclFilePath: String? = null,
         mode: String = "gui",
         deleteIfExists: Boolean = false
     ): Process {
@@ -128,6 +129,9 @@ object VivadoUtils {
             
             command.add("-source")
             command.add(scriptFile.absolutePath)
+        } else if (tclFilePath != null) {
+            command.add("-source")
+            command.add(tclFilePath)
         }
 
         

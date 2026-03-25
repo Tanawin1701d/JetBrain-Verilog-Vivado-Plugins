@@ -14,12 +14,15 @@ class VivadoActionGroup : ActionGroup() {
         return arrayOf(
             IPComposerAction(),
             BuildProjectAction(),
-            OpenProjectAction()
+            OpenProjectAction(),
+            RunTclScriptAction()
         )
     }
 
     override fun update(e: AnActionEvent) {
         val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
-        e.presentation.isEnabledAndVisible = virtualFile?.isDirectory == true
+        val isDirectory = virtualFile?.isDirectory == true
+        val isTclFile = virtualFile?.fileType is com.hdl.tcl.TclFileType
+        e.presentation.isEnabledAndVisible = isDirectory || isTclFile
     }
 }

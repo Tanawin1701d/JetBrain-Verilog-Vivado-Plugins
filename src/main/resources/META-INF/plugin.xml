@@ -95,6 +95,7 @@
                description="Vivado operations"
                popup="true">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </group>
         
         <!-- Linter Actions -->
