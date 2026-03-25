@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.hdl.verilog-vivado-plugin</id>
     <name>Verilog and Vivado Support</name>
-    <vendor email="support@hdl.com" url="http://www.hdl.com">HDL Development Team</vendor>
+    <vendor email="tanawin1701d@outlook.com" url="https://github.com/Tanawin1701d/JetBrain-Verilog-Vivado-Plugins">Merge Panic Society</vendor>
 
     <description><![CDATA[
     IntelliJ plugin for Verilog development with Vivado integration.<br>

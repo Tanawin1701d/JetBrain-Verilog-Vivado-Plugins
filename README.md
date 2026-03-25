@@ -21,7 +21,23 @@ An IntelliJ IDEA plugin providing comprehensive Verilog language support and Viv
 - Brace matching for parentheses, brackets, and braces
 - Proper indentation support
 
-### 2. Linting Support
+### 2. Tcl Language Support
+
+#### Syntax Highlighting
+- Full syntax highlighting for Tcl scripts (.tcl) and Xilinx Design Constraints (.xdc)
+- Keywords, Vivado-specific commands, variables, strings, and numbers highlighted
+- Support for `${var}` variable syntax
+
+#### Auto-completion
+- Comprehensive Tcl keyword suggestions
+- Common Vivado and Xilinx Tcl commands (create_bd_cell, set_property, etc.)
+
+#### Code Features
+- Line comment support (#)
+- Code folding for `proc` bodies, `for` loops, and any braced blocks (`{ ... }`)
+- Nested block support for complex scripts
+
+### 3. Linting Support
 
 #### Generalized Linter Interface
 - Pluggable architecture supporting multiple linters
@@ -58,6 +74,11 @@ An IntelliJ IDEA plugin providing comprehensive Verilog language support and Viv
 - Generates Vivado project with proper file hierarchy
 - Supports both Verilog (.v, .sv) and VHDL (.vhd, .vhdl) files
 - Opens Vivado GUI with the created project
+
+#### Run Tcl Script
+- Right-click .tcl or .xdc file → Vivado → Run Tcl Script
+- Launches Vivado in GUI mode and executes the script automatically
+- Convenient for running project creation scripts or timing constraints
 
 #### Open Existing Projects
 - Right-click .xpr file or folder → Vivado → Open Vivado Project
@@ -116,6 +137,11 @@ An IntelliJ IDEA plugin providing comprehensive Verilog language support and Viv
 2. Select Vivado → Run Synthesis
 3. Check notifications for completion status
 
+### Running Tcl Scripts
+1. Right-click a .tcl or .xdc file in the project view
+2. Select Vivado → Run Tcl Script
+3. Vivado will open and source the script automatically
+
 ## Configuration
 
 ### Vivado Settings
@@ -135,6 +161,14 @@ An IntelliJ IDEA plugin providing comprehensive Verilog language support and Viv
 - `VerilogParser`: AST construction
 - `VerilogSyntaxHighlighter`: Color scheme
 - `VerilogCompletionContributor`: Auto-completion
+
+### Tcl Support
+- `TclLanguage`: Language definition
+- `TclLexer`: Tokenization (supports Tcl and Vivado commands)
+- `TclParser`: AST construction with block detection
+- `TclSyntaxHighlighter`: Color scheme
+- `TclCompletionContributor`: Intelligent suggestions
+- `TclFoldingBuilder`: Code folding logic for braced blocks
 
 ### Linter Framework
 - `VerilogLinter`: Interface for all linters
@@ -178,7 +212,6 @@ class MyCustomLinter : VerilogLinter {
 - Code navigation (go to definition, find usages)
 - Refactoring support (rename, extract module)
 - Waveform viewer integration
-- Constraint file (.xdc) support
 - Timing analysis integration
 - Multiple linter selection in settings
 - Quick fixes for common errors
