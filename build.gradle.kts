@@ -32,6 +32,15 @@ tasks {
     patchPluginXml {
         sinceBuild.set("233")
         untilBuild.set("253.*")
+        changeNotes.set("""
+            <ul>
+                <li>Added Tcl language support (.tcl, .xdc)</li>
+                <li>Syntax highlighting for Tcl and Vivado commands</li>
+                <li>Code folding and auto-completion for Tcl</li>
+                <li>New Vivado actions: Run Tcl Script, Open Project, IP Composer</li>
+                <li>Integrated Icarus Verilog linter</li>
+            </ul>
+        """.trimIndent())
     }
 
     signPlugin {

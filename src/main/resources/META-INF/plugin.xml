@@ -8,9 +8,11 @@
     <br>
     Features:<br>
     <ul>
-        <li>Verilog syntax highlighting and auto-completion</li>
-        <li>Generalized linter interface with iverilog support</li>
+        <li>Verilog and Tcl syntax highlighting and auto-completion</li>
+        <li>Tcl code folding for braced blocks and procs</li>
+        <li>Generalized linter interface with Icarus Verilog support</li>
         <li>Vivado integration for IP composition, project building, and management</li>
+        <li>Run Tcl scripts directly from the editor/project view</li>
         <li>Configurable Vivado path, board, and part settings</li>
     </ul>
   ]]></description>
