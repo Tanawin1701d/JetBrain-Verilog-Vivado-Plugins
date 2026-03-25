@@ -41,6 +41,25 @@
         <completion.contributor language="Verilog"
                                implementationClass="com.hdl.verilog.VerilogCompletionContributor"/>
 
+        <!-- Tcl Language Support -->
+        <fileType name="Tcl"
+                  implementationClass="com.hdl.tcl.TclFileType"
+                  fieldName="INSTANCE"
+                  language="Tcl"
+                  extensions="tcl;xdc"/>
+
+        <lang.parserDefinition language="Tcl"
+                               implementationClass="com.hdl.tcl.TclParserDefinition"/>
+
+        <lang.syntaxHighlighterFactory language="Tcl"
+                                       implementationClass="com.hdl.tcl.TclSyntaxHighlighterFactory"/>
+
+        <completion.contributor language="Tcl"
+                               implementationClass="com.hdl.tcl.TclCompletionContributor"/>
+        
+        <lang.foldingBuilder language="Tcl"
+                            implementationClass="com.hdl.tcl.TclFoldingBuilder"/>
+
         <!-- External Annotator for Linting -->
         <externalAnnotator language="Verilog"
                           implementationClass="com.hdl.verilog.linter.VerilogExternalAnnotator"/>

@@ -12,7 +12,7 @@ reg [3:0] in_d;
 
 always @(posedge clk) begin
     if (!rst_n) begin
-        in_d <= 4'b0000;ghghg
+        in_d <= 4'b0000;
     end else begin
         in_d <= in_now;
     end
