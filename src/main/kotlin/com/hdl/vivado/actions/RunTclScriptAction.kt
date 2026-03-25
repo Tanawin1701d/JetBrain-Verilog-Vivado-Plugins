@@ -20,7 +20,7 @@ class RunTclScriptAction : AnAction("Run Tcl Script") {
         val project = e.project ?: return
         val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
 
-        if (virtualFile.fileType !is TclFileType) {
+        if (virtualFile.fileType !is TclFileType && virtualFile.extension !in listOf("tcl", "xdc")) {
             return
         }
 
@@ -68,6 +68,7 @@ class RunTclScriptAction : AnAction("Run Tcl Script") {
 
     override fun update(e: AnActionEvent) {
         val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
-        e.presentation.isEnabledAndVisible = virtualFile != null && virtualFile.fileType is TclFileType
+        val isTclFile = virtualFile != null && (virtualFile.fileType is TclFileType || virtualFile.extension in listOf("tcl", "xdc"))
+        e.presentation.isEnabledAndVisible = isTclFile
     }
 }

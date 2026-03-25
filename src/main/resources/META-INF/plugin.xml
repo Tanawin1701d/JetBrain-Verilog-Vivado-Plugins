@@ -98,6 +98,24 @@
                popup="true">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <action id="com.hdl.vivado.actions.RunTclScriptAction"
+                    class="com.hdl.vivado.actions.RunTclScriptAction"
+                    text="Run Tcl Script"
+                    description="Run the selected Tcl script in Vivado">
+                <keyboard-shortcut first-keystroke="control alt R" keymap="$default"/>
+            </action>
+            <action id="com.hdl.vivado.actions.IPComposerAction"
+                    class="com.hdl.vivado.actions.IPComposerAction"
+                    text="IP Composer"
+                    description="Launch Vivado IP Composer"/>
+            <action id="com.hdl.vivado.actions.BuildProjectAction"
+                    class="com.hdl.vivado.actions.BuildProjectAction"
+                    text="Build Project"
+                    description="Create a Vivado project from HDL files"/>
+            <action id="com.hdl.vivado.actions.OpenProjectAction"
+                    class="com.hdl.vivado.actions.OpenProjectAction"
+                    text="Open Project"
+                    description="Open an existing Vivado project"/>
         </group>
         
         <!-- Linter Actions -->
