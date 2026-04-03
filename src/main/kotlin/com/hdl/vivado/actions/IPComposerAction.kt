@@ -35,7 +35,7 @@ class IPComposerAction : AnAction("IP Composer") {
         if (!File(settings.vivadoPath).exists()) {
             Messages.showErrorDialog(
                 project,
-                "Vivado not found at: ${settings.vivadoPath}\nPlease configure Vivado path in Settings > Tools > Vivado Settings",
+                "Vivado not found at: ${settings.vivadoPath}\nPlease configure the Vivado path in Settings > Tools > HDL Settings",
                 "Vivado Not Found"
             )
             return
@@ -50,7 +50,7 @@ class IPComposerAction : AnAction("IP Composer") {
             if (ipRepoPath.isEmpty()) {
                 Messages.showErrorDialog(
                     project,
-                    "IP Repository Path is not configured. Please set it in Vivado Settings.",
+                    "IP Repository Path is not configured. Please set it in HDL Settings.",
                     "Configuration Error"
                 )
                 return

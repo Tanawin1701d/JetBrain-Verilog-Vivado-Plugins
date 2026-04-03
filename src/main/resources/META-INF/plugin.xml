@@ -68,9 +68,9 @@
 
         <!-- Settings -->
         <projectConfigurable parentId="tools"
-                           instance="com.hdl.vivado.VivadoSettingsConfigurable"
-                           id="com.hdl.vivado.VivadoSettingsConfigurable"
-                           displayName="Vivado Settings"/>
+                           instance="com.hdl.settings.HdlSettingsConfigurable"
+                           id="com.hdl.settings.HdlSettingsConfigurable"
+                           displayName="HDL Settings"/>
         
         <projectService serviceImplementation="com.hdl.vivado.VivadoSettingsState"/>
         <projectService serviceImplementation="com.hdl.verilog.linter.LinterSettingsState"/>
@@ -78,9 +78,9 @@
         <!-- Notification Group -->
         <notificationGroup id="Vivado" displayType="BALLOON"/>
         
-        <toolWindow id="Vivado Settings" 
+        <toolWindow id="HDL Settings"
                     anchor="right" 
-                    factoryClass="com.hdl.vivado.VivadoSettingsToolWindowFactory"
+                    factoryClass="com.hdl.settings.HdlSettingsToolWindowFactory"
                     icon="com.hdl.verilog.VerilogIcons.FILE"/>
 
         <toolWindow id="Verilog Linter Debugger"

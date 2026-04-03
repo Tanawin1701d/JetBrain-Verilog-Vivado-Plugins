@@ -25,7 +25,7 @@ class OpenProjectAction : AnAction("Open Project") {
         if (!File(settings.vivadoPath).exists()) {
             Messages.showErrorDialog(
                 project,
-                "Vivado not found at: ${settings.vivadoPath}\nPlease configure Vivado path in Settings > Tools > Vivado Settings",
+                "Vivado not found at: ${settings.vivadoPath}\nPlease configure the Vivado path in Settings > Tools > HDL Settings",
                 "Vivado Not Found"
             )
             return
