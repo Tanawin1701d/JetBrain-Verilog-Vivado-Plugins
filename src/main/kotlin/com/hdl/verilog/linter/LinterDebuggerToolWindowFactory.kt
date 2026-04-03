@@ -1,5 +1,6 @@
 package com.hdl.verilog.linter
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -15,24 +16,29 @@ import javax.swing.table.DefaultTableModel
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.Alarm
 import java.awt.Font
 
 class LinterDebuggerToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+        val toolWindowContent = LinterDebuggerToolWindowContent(project)
         val content = ContentFactory.getInstance().createContent(
-            LinterDebuggerToolWindowContent(project).getContent(),
+            toolWindowContent.getContent(),
             "",
             false
         )
         toolWindow.contentManager.addContent(content)
+        Disposer.register(content, toolWindowContent)
     }
 }
 
-class LinterDebuggerToolWindowContent(private val project: Project) {
+class LinterDebuggerToolWindowContent(private val project: Project) : Disposable {
     private val rawOutputArea = JBTextArea()
     private val resultsTableModel = DefaultTableModel(arrayOf("File", "Line", "Severity", "Message"), 0)
     private val resultsTable = JBTable(resultsTableModel)
     private val mainPanel = JPanel(BorderLayout())
+    private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
 
     init {
         rawOutputArea.isEditable = false
@@ -48,17 +54,19 @@ class LinterDebuggerToolWindowContent(private val project: Project) {
         mainPanel.add(splitPane, BorderLayout.CENTER)
 
         // Periodically update the UI
-        val timer = java.util.Timer()
-        timer.schedule(object : java.util.TimerTask() {
-            override fun run() {
-                ApplicationManager.getApplication().invokeLater {
-                    updateContent()
-                }
-            }
-        }, 0, 1000)
+        scheduleUpdate()
+    }
+
+    private fun scheduleUpdate() {
+        if (project.isDisposed) return
+        alarm.addRequest({
+            updateContent()
+            scheduleUpdate()
+        }, 1000)
     }
 
     private fun updateContent() {
+        if (project.isDisposed) return
         val service = LinterDebuggerService.getInstance(project)
         if (rawOutputArea.text != service.lastRawOutput) {
             rawOutputArea.text = service.lastRawOutput
@@ -76,4 +84,8 @@ class LinterDebuggerToolWindowContent(private val project: Project) {
     }
 
     fun getContent(): JPanel = mainPanel
+
+    override fun dispose() {
+        // Alarm is disposed automatically as it's registered with this Disposable
+    }
 }

@@ -12,8 +12,16 @@ import com.intellij.openapi.project.Project
 class LinterSettingsState : PersistentStateComponent<LinterSettingsState.State> {
     
     data class State(
-        var topFolder: String? = null
+        var topFolder: String? = null,
+        var linterType: LinterType = LinterType.IVERILOG,
+        var iverilogPath: String = "/usr/bin/iverilog",
+        var verilatorPath: String = "/usr/bin/verilator"
     )
+
+    enum class LinterType {
+        IVERILOG,
+        VERILATOR
+    }
 
     private var myState = State()
 
@@ -21,6 +29,24 @@ class LinterSettingsState : PersistentStateComponent<LinterSettingsState.State> 
         get() = myState.topFolder
         set(value) {
             myState.topFolder = value
+        }
+
+    var linterType: LinterType
+        get() = myState.linterType
+        set(value) {
+            myState.linterType = value
+        }
+
+    var iverilogPath: String
+        get() = myState.iverilogPath
+        set(value) {
+            myState.iverilogPath = value
+        }
+
+    var verilatorPath: String
+        get() = myState.verilatorPath
+        set(value) {
+            myState.verilatorPath = value
         }
 
     override fun getState(): State = myState

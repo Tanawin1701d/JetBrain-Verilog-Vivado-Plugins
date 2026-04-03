@@ -1,5 +1,6 @@
 package com.hdl.vivado
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -10,6 +11,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.FormBuilder
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.openapi.util.Disposer
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -17,16 +19,18 @@ import java.awt.BorderLayout
 
 class VivadoSettingsToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+        val toolWindowContent = VivadoSettingsToolWindowContent(project)
         val content = ContentFactory.getInstance().createContent(
-            VivadoSettingsToolWindowContent(project).getContent(),
+            toolWindowContent.getContent(),
             "",
             false
         )
         toolWindow.contentManager.addContent(content)
+        Disposer.register(content, toolWindowContent)
     }
 }
 
-class VivadoSettingsToolWindowContent(private val project: Project) {
+class VivadoSettingsToolWindowContent(private val project: Project) : Disposable {
     private val vivadoPathField = TextFieldWithBrowseButton()
     private val boardField = JBTextField()
     private val partField = JBTextField()
@@ -75,6 +79,7 @@ class VivadoSettingsToolWindowContent(private val project: Project) {
     }
 
     private fun applySettings() {
+        if (project.isDisposed) return
         val settings = VivadoSettingsState.getInstance(project)
         settings.vivadoPath = vivadoPathField.text
         settings.board = boardField.text
@@ -83,10 +88,13 @@ class VivadoSettingsToolWindowContent(private val project: Project) {
     }
 
     private fun resetFields() {
+        if (project.isDisposed) return
         val settings = VivadoSettingsState.getInstance(project)
         vivadoPathField.text = settings.vivadoPath
         boardField.text = settings.board
         partField.text = settings.part
         ipRepoPathField.text = settings.ipRepoPath
     }
+
+    override fun dispose() {}
 }

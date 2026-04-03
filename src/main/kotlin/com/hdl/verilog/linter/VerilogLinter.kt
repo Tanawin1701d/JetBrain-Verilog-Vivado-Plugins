@@ -14,17 +14,19 @@ interface VerilogLinter {
 
     /**
      * Check if the linter is available on the system
+     * @param toolPath Custom path to the linter tool
      */
-    fun isAvailable(): Boolean
+    fun isAvailable(toolPath: String? = null): Boolean
 
     /**
      * Lint a Verilog file
+     * @param toolPath Custom path to the linter tool
      * @param file The file to lint (VirtualFile for metadata and path)
      * @param content The actual content of the file (to handle unsaved changes)
      * @param topFolder The top folder for context (all files in this folder are accessible)
      * @return Result object containing the lint results and the raw output
      */
-    fun lint(file: VirtualFile, content: String, topFolder: VirtualFile?): LinterOutput
+    fun lint(toolPath: String?, file: VirtualFile, content: String, topFolder: VirtualFile?): LinterOutput
 }
 
 /**

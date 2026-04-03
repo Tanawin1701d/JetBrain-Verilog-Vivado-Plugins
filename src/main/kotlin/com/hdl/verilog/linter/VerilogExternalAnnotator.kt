@@ -12,10 +12,6 @@ import com.hdl.verilog.VerilogFile
 class VerilogExternalAnnotator : ExternalAnnotator<PsiFile, List<LintResult>>() {
     private val LOG = Logger.getInstance(VerilogExternalAnnotator::class.java)
     
-    private val linters = listOf<VerilogLinter>(
-        IcarusVerilogLinter()
-    )
-
     override fun collectInformation(file: PsiFile): PsiFile? {
         return if (file is VerilogFile) file else null
     }
@@ -30,22 +26,31 @@ class VerilogExternalAnnotator : ExternalAnnotator<PsiFile, List<LintResult>>() 
             virtualFile.fileSystem.findFileByPath(it) 
         }
 
+        val linter = when (settingsState.linterType) {
+            LinterSettingsState.LinterType.IVERILOG -> IcarusVerilogLinter()
+            LinterSettingsState.LinterType.VERILATOR -> VerilatorLinter()
+        }
+        
+        val toolPath = when (settingsState.linterType) {
+            LinterSettingsState.LinterType.IVERILOG -> settingsState.iverilogPath
+            LinterSettingsState.LinterType.VERILATOR -> settingsState.verilatorPath
+        }
+
         val results = mutableListOf<LintResult>()
         val rawOutput = StringBuilder()
         
         LOG.info("Starting linting for: ${virtualFile.path}")
         val fileContent = collectedInfo.text
-        for (linter in linters) {
-            if (linter.isAvailable()) {
-                val linterOutput = linter.lint(virtualFile, fileContent, topFolder)
-                LOG.info("Linter ${linter.name} returned ${linterOutput.results.size} results")
-                results.addAll(linterOutput.results)
-                rawOutput.append("--- Linter: ${linter.name} ---\n")
-                rawOutput.append(linterOutput.rawOutput).append("\n")
-            } else {
-                LOG.warn("Linter ${linter.name} is not available")
-                rawOutput.append("--- Linter: ${linter.name} (Not available) ---\n")
-            }
+        
+        if (linter.isAvailable(toolPath)) {
+            val linterOutput = linter.lint(toolPath, virtualFile, fileContent, topFolder)
+            LOG.info("Linter ${linter.name} returned ${linterOutput.results.size} results")
+            results.addAll(linterOutput.results)
+            rawOutput.append("--- Linter: ${linter.name} ---\n")
+            rawOutput.append(linterOutput.rawOutput).append("\n")
+        } else {
+            LOG.warn("Linter ${linter.name} is not available at $toolPath")
+            rawOutput.append("--- Linter: ${linter.name} (Not available at $toolPath) ---\n")
         }
 
         LinterDebuggerService.getInstance(project).update(rawOutput.toString(), results)
