@@ -66,6 +66,8 @@
         <externalAnnotator language="Verilog"
                           implementationClass="com.hdl.verilog.linter.VerilogExternalAnnotator"/>
 
+        <projectViewNodeDecorator implementation="com.hdl.verilog.TopFolderProjectViewDecorator"/>
+
         <!-- Settings -->
         <projectConfigurable parentId="tools"
                            instance="com.hdl.settings.HdlSettingsConfigurable"

@@ -1,6 +1,7 @@
 package com.hdl.verilog.actions
 
 import com.hdl.verilog.linter.LinterSettingsState
+import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -25,6 +26,7 @@ class SelectTopFolderAction : AnAction("Set as Verilog Top Folder") {
 
         val settings = LinterSettingsState.getInstance(project)
         settings.topFolder = virtualFile.path
+        ProjectView.getInstance(project).refresh()
 
         Messages.showInfoMessage(
             project,

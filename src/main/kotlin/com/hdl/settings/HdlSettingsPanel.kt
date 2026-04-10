@@ -4,6 +4,7 @@ import com.hdl.verilog.linter.IcarusVerilogLinter
 import com.hdl.verilog.linter.LinterSettingsState
 import com.hdl.verilog.linter.VerilatorLinter
 import com.hdl.vivado.VivadoSettingsState
+import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -115,6 +116,7 @@ class HdlSettingsPanel(
 
         val vivadoSettings = VivadoSettingsState.getInstance(project)
         val linterSettings = LinterSettingsState.getInstance(project)
+        val previousTopFolder = linterSettings.topFolder
 
         vivadoSettings.vivadoPath = vivadoPathField.text.trim()
         vivadoSettings.board = boardField.text.trim()
@@ -125,6 +127,10 @@ class HdlSettingsPanel(
         linterSettings.linterType = linterTypeComboBox.selectedItem as LinterSettingsState.LinterType
         linterSettings.iverilogPath = iverilogPathField.text.trim()
         linterSettings.verilatorPath = verilatorPathField.text.trim()
+
+        if (previousTopFolder != linterSettings.topFolder) {
+            ProjectView.getInstance(project).refresh()
+        }
     }
 
     fun resetFromState() {
