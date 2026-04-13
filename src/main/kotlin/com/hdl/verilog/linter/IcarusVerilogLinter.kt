@@ -1,7 +1,9 @@
 package com.hdl.verilog.linter
 
+import com.hdl.vivado.FileUtils
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.BufferedReader
@@ -60,6 +62,7 @@ class IcarusVerilogLinter : VerilogLinter {
     // lint
     // -------------------------------------------------------------------------
     override fun lint(
+        project: Project,
         toolPath: String?,
         file: VirtualFile,
         content: String,
@@ -147,7 +150,7 @@ class IcarusVerilogLinter : VerilogLinter {
             results.add(LintResult(file.path, 0, severity = LintResult.Severity.ERROR,
                 message = "Failed to run iverilog: ${e.message}"))
         } finally {
-            tempFile?.delete()
+            tempFile?.let { FileUtils.safeDelete(it, project) }
         }
 
         return LinterOutput(results, rawOutput.toString())

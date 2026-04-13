@@ -16,6 +16,10 @@ class SelectTopFileAction : AnAction("Set as Verilog Top File") {
         val project     = e.project ?: return
         val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
         val settings    = LinterSettingsState.getInstance(project)
+        if (settings.isTopFileFrozen) {
+            Messages.showErrorDialog(project, "Top File selection is frozen in settings.", "Selection Locked")
+            return
+        }
         val topFolder   = settings.topFolder
 
         if (topFolder == null) {
@@ -54,6 +58,12 @@ class SelectTopFileAction : AnAction("Set as Verilog Top File") {
         val project     = e.project
 
         if (virtualFile == null || project == null || virtualFile.isDirectory) {
+            e.presentation.isEnabledAndVisible = false
+            return
+        }
+
+        val settings = LinterSettingsState.getInstance(project)
+        if (settings.isTopFileFrozen) {
             e.presentation.isEnabledAndVisible = false
             return
         }

@@ -1,5 +1,6 @@
 package com.hdl.verilog.linter
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
 /**
@@ -36,6 +37,7 @@ interface VerilogLinter {
      * @param excludePaths Paths to be excluded from the linting run (useful for multi-pass linting).
      */
     fun lint(
+        project: Project,
         toolPath: String?,
         file: VirtualFile,
         content: String,

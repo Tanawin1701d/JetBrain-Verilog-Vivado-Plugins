@@ -14,6 +14,7 @@ class LinterSettingsState : PersistentStateComponent<LinterSettingsState.State> 
     data class State(
         var topFolder: String? = null,
         var topFile: String? = null,
+        var isTopFileFrozen: Boolean = false,
         var linterType: LinterType = LinterType.IVERILOG,
         var iverilogPath: String = "/usr/bin/iverilog",
         var verilatorPath: String = "/usr/bin/verilator"
@@ -35,7 +36,15 @@ class LinterSettingsState : PersistentStateComponent<LinterSettingsState.State> 
     var topFile: String?
         get() = myState.topFile
         set(value) {
-            myState.topFile = value
+            if (!myState.isTopFileFrozen) {
+                myState.topFile = value
+            }
+        }
+
+    var isTopFileFrozen: Boolean
+        get() = myState.isTopFileFrozen
+        set(value) {
+            myState.isTopFileFrozen = value
         }
 
     var linterType: LinterType
