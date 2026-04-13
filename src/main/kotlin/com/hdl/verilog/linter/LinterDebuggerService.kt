@@ -17,8 +17,11 @@ class LinterDebuggerService {
         fileToResults.clear()
         for (result in results) {
             val absPath = java.io.File(result.file).absolutePath
-            val list = fileToResults.getOrPut(absPath) { mutableListOf() } as MutableList
-            list.add(result)
+            val list = fileToResults.getOrPut(absPath) { mutableListOf() } as MutableList<LintResult>
+            // Avoid duplicate messages for the same file, line, and message
+            if (list.none { it.line == result.line && it.message == result.message }) {
+                list.add(result)
+            }
         }
     }
 

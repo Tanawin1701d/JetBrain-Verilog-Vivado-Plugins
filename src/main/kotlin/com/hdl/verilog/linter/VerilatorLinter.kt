@@ -64,7 +64,8 @@ class VerilatorLinter : VerilogLinter {
         file: VirtualFile,
         content: String,
         topFolder: VirtualFile?,
-        topFile: VirtualFile?
+        topFile: VirtualFile?,
+        excludePaths: Set<String>
     ): LinterOutput {
         val results   = mutableListOf<LintResult>()
         val rawOutput = StringBuilder()
@@ -78,11 +79,11 @@ class VerilatorLinter : VerilogLinter {
             val commandLine = GeneralCommandLine(path, "--lint-only", "-Wall")
 
             // Pass the top-module name (--top-module flag)
-            val topModuleName = topFile?.let { resolveTopModuleName(it, file, content) }
-            if (topModuleName != null) {
-                commandLine.addParameter("--top-module")
-                commandLine.addParameter(topModuleName)
-            }
+//            val topModuleName = topFile?.let { resolveTopModuleName(it, file, content) }
+//            if (topModuleName != null) {
+//                commandLine.addParameter("--top-module")
+//                commandLine.addParameter(topModuleName)
+//            }
 
             if (topFolder != null) {
                 // Use java.io.File.walkTopDown() to collect files from disk directly.
@@ -94,15 +95,19 @@ class VerilatorLinter : VerilogLinter {
                     commandLine.addParameter(tempFile.absolutePath)
                 } else {
                     var currentIncluded = false
+                    val canonicalExcludes = excludePaths.map { File(it).canonicalPath }.toSet()
                     for (p in allPaths) {
-                        if (File(p).canonicalPath == currentFileCanonical) {
+                        val pCanonical = File(p).canonicalPath
+                        if (pCanonical in canonicalExcludes) continue
+
+                        if (pCanonical == currentFileCanonical) {
                             commandLine.addParameter(tempFile.absolutePath)
                             currentIncluded = true
                         } else {
                             commandLine.addParameter(p)
                         }
                     }
-                    if (!currentIncluded) {
+                    if (!currentIncluded && currentFileCanonical !in canonicalExcludes) {
                         commandLine.addParameter(tempFile.absolutePath)
                     }
                 }

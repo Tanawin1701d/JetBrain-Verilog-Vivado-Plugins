@@ -33,13 +33,15 @@ interface VerilogLinter {
      * @param topFile   The designated top-level file inside [topFolder]; its module
      *                  name is forwarded as the elaboration entry-point flag.
      *                  Null = no explicit top module.
+     * @param excludePaths Paths to be excluded from the linting run (useful for multi-pass linting).
      */
     fun lint(
         toolPath: String?,
         file: VirtualFile,
         content: String,
         topFolder: VirtualFile?,
-        topFile: VirtualFile? = null
+        topFile: VirtualFile? = null,
+        excludePaths: Set<String> = emptySet()
     ): LinterOutput
 }
 
