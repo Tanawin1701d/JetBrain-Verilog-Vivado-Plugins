@@ -26,6 +26,7 @@ class HdlSettingsConfigurable(private val project: Project) : Configurable {
     }
 
     override fun disposeUIResources() {
+        settingsPanel?.dispose()
         settingsPanel = null
     }
 }

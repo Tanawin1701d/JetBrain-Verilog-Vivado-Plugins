@@ -72,7 +72,7 @@ class LinterDebuggerToolWindowContent(private val project: Project) : Disposable
             rawOutputArea.text = service.lastRawOutput
             
             resultsTableModel.rowCount = 0
-            for (result in service.lastResults) {
+            for (result in service.getAllResults()) {
                 resultsTableModel.addRow(arrayOf(
                     result.file.substringAfterLast('/'),
                     result.line,

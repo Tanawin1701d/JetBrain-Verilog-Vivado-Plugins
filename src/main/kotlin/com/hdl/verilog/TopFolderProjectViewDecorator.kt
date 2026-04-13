@@ -9,17 +9,22 @@ import com.intellij.openapi.vfs.VirtualFile
 class TopFolderProjectViewDecorator : ProjectViewNodeDecorator {
     override fun decorate(node: ProjectViewNode<*>, data: PresentationData) {
         val project = node.project ?: return
-        val topFolderPath = LinterSettingsState.getInstance(project).topFolder ?: return
         val virtualFile = node.virtualFile ?: return
+        val settings = LinterSettingsState.getInstance(project)
 
-        if (!virtualFile.isDirectory) return
-        if (!matchesTopFolder(virtualFile, topFolderPath)) return
+        // Decorate the top folder
+        val topFolderPath = settings.topFolder
+        if (topFolderPath != null && virtualFile.isDirectory && virtualFile.path == topFolderPath) {
+            data.setIcon(VerilogIcons.TOP_FOLDER)
+            data.tooltip = "Verilog top folder"
+            return
+        }
 
-        data.setIcon(VerilogIcons.TOP_FOLDER)
-        data.tooltip = "Verilog top folder"
-    }
-
-    private fun matchesTopFolder(virtualFile: VirtualFile, topFolderPath: String): Boolean {
-        return virtualFile.path == topFolderPath
+        // Decorate the top file
+        val topFilePath = settings.topFile
+        if (topFilePath != null && !virtualFile.isDirectory && virtualFile.path == topFilePath) {
+            data.setIcon(VerilogIcons.TOP_FILE)
+            data.tooltip = "Verilog top file (elaboration entry-point)"
+        }
     }
 }

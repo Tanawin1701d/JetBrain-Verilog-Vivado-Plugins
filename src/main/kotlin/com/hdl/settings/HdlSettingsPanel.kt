@@ -1,10 +1,12 @@
 package com.hdl.settings
 
 import com.hdl.verilog.linter.IcarusVerilogLinter
+import com.hdl.verilog.linter.LinterSettingsBroadcaster
 import com.hdl.verilog.linter.LinterSettingsState
 import com.hdl.verilog.linter.VerilatorLinter
 import com.hdl.vivado.VivadoSettingsState
 import com.intellij.ide.projectView.ProjectView
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -16,176 +18,350 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.FormBuilder
 import java.awt.BorderLayout
-import javax.swing.JButton
-import javax.swing.JComponent
-import javax.swing.JPanel
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.FlowLayout
+import java.awt.Font
+import javax.swing.*
+import javax.swing.event.DocumentEvent
+import javax.swing.event.DocumentListener
 
 class HdlSettingsPanel(
     private val project: Project,
-    showActionButtons: Boolean
+    private val showActionButtons: Boolean
 ) {
-    private val vivadoPathField = TextFieldWithBrowseButton()
-    private val boardField = JBTextField()
-    private val partField = JBTextField()
-    private val ipRepoPathField = TextFieldWithBrowseButton()
-    private val topFolderField = TextFieldWithBrowseButton()
+    // -------------------------------------------------------------------------
+    // Vivado fields
+    // -------------------------------------------------------------------------
+    private val vivadoPathField   = TextFieldWithBrowseButton()
+    private val boardField        = JBTextField()
+    private val partField         = JBTextField()
+    private val ipRepoPathField   = TextFieldWithBrowseButton()
+
+    // -------------------------------------------------------------------------
+    // Linter fields
+    // -------------------------------------------------------------------------
+    private val topFolderField    = TextFieldWithBrowseButton()
+    private val topFileField      = TextFieldWithBrowseButton()
     private val linterTypeComboBox = ComboBox(LinterSettingsState.LinterType.entries.toTypedArray())
-    private val iverilogPathField = TextFieldWithBrowseButton()
+    private val iverilogPathField  = TextFieldWithBrowseButton()
     private val verilatorPathField = TextFieldWithBrowseButton()
-    private val testIverilogButton = JButton("Test")
+
+    // -------------------------------------------------------------------------
+    // Buttons
+    // -------------------------------------------------------------------------
+    private val testIverilogButton  = JButton("Test")
     private val testVerilatorButton = JButton("Test")
-    private val applyButton = JButton("Apply")
-    private val resetButton = JButton("Reset")
+    private val applyButton         = JButton("Apply")
+    private val resetButton         = JButton("Reset")
+    private val helpButton          = JButton("? Help")
+
+    // -------------------------------------------------------------------------
+    // Unsaved-changes indicator + blink timer
+    // -------------------------------------------------------------------------
+    private val unsavedLabel = JLabel("\u25CF Unsaved changes").apply {
+        foreground = Color(210, 100, 0)
+        font       = font.deriveFont(Font.BOLD)
+        isVisible  = false
+    }
+
+    /** Original button foreground; restored when blinking stops. */
+    private val defaultApplyFg: Color get() = UIManager.getColor("Button.foreground") ?: applyButton.foreground
+
+    private var blinkState  = false
+    private var blinkTimer: Timer? = null
+
+    /** Keeps the panel in sync when right-click actions change LinterSettingsState externally. */
+    private val externalChangeListener: () -> Unit = {
+        if (!project.isDisposed) resetFromState()
+    }
+
+    // -------------------------------------------------------------------------
+    // Root component
+    // -------------------------------------------------------------------------
     private val content: JComponent
 
+    // -------------------------------------------------------------------------
+    // Init
+    // -------------------------------------------------------------------------
     init {
-        vivadoPathField.addBrowseFolderListener(
-            "Select Vivado Executable",
-            null,
-            project,
-            FileChooserDescriptorFactory.createSingleFileDescriptor()
-        )
-        ipRepoPathField.addBrowseFolderListener(
-            "Select IP Repository Directory",
-            null,
-            project,
-            FileChooserDescriptorFactory.createSingleFolderDescriptor()
-        )
-        topFolderField.addBrowseFolderListener(
-            "Select Verilog Top Folder",
-            null,
-            project,
-            FileChooserDescriptorFactory.createSingleFolderDescriptor()
-        )
-        iverilogPathField.addBrowseFolderListener(
-            "Select Icarus Verilog Executable",
-            null,
-            project,
-            FileChooserDescriptorFactory.createSingleFileDescriptor()
-        )
-        verilatorPathField.addBrowseFolderListener(
-            "Select Verilator Executable",
-            null,
-            project,
-            FileChooserDescriptorFactory.createSingleFileDescriptor()
-        )
-
-        testIverilogButton.addActionListener {
-            val linter = IcarusVerilogLinter()
-            if (linter.isAvailable(iverilogPathField.text)) {
-                Messages.showInfoMessage(project, "Icarus Verilog is available.", "Linter Test")
-            } else {
-                Messages.showErrorDialog(project, "Icarus Verilog is not available at the selected path.", "Linter Test")
-            }
-        }
-
-        testVerilatorButton.addActionListener {
-            val linter = VerilatorLinter()
-            if (linter.isAvailable(verilatorPathField.text)) {
-                Messages.showInfoMessage(project, "Verilator is available.", "Linter Test")
-            } else {
-                Messages.showErrorDialog(project, "Verilator is not available at the selected path.", "Linter Test")
-            }
-        }
-
-        applyButton.addActionListener { applyToState() }
-        resetButton.addActionListener { resetFromState() }
-
-        content = buildContent(showActionButtons)
+        setupBrowseListeners()
+        setupTestButtons()
+        setupActionButtons()
+        setupChangeListeners()
+        content = buildContent()
         resetFromState()
+        subscribeToExternalChanges()
     }
 
     fun getComponent(): JComponent = content
 
+    // -------------------------------------------------------------------------
+    // Public API used by Configurable and ToolWindowFactory
+    // -------------------------------------------------------------------------
     fun isModified(): Boolean {
-        val vivadoSettings = VivadoSettingsState.getInstance(project)
-        val linterSettings = LinterSettingsState.getInstance(project)
-
-        return vivadoPathField.text != vivadoSettings.vivadoPath ||
-            boardField.text != vivadoSettings.board ||
-            partField.text != vivadoSettings.part ||
-            ipRepoPathField.text != vivadoSettings.ipRepoPath ||
-            topFolderField.text != (linterSettings.topFolder ?: "") ||
-            linterTypeComboBox.selectedItem != linterSettings.linterType ||
-            iverilogPathField.text != linterSettings.iverilogPath ||
-            verilatorPathField.text != linterSettings.verilatorPath
+        val vs = VivadoSettingsState.getInstance(project)
+        val ls = LinterSettingsState.getInstance(project)
+        return vivadoPathField.text    != vs.vivadoPath        ||
+               boardField.text         != vs.board              ||
+               partField.text          != vs.part               ||
+               ipRepoPathField.text    != vs.ipRepoPath         ||
+               topFolderField.text     != (ls.topFolder ?: "")  ||
+               topFileField.text       != (ls.topFile   ?: "")  ||
+               linterTypeComboBox.selectedItem != ls.linterType  ||
+               iverilogPathField.text  != ls.iverilogPath       ||
+               verilatorPathField.text != ls.verilatorPath
     }
 
     fun applyToState() {
         if (project.isDisposed) return
 
-        val vivadoSettings = VivadoSettingsState.getInstance(project)
-        val linterSettings = LinterSettingsState.getInstance(project)
-        val previousTopFolder = linterSettings.topFolder
+        val vs = VivadoSettingsState.getInstance(project)
+        val ls = LinterSettingsState.getInstance(project)
 
-        vivadoSettings.vivadoPath = vivadoPathField.text.trim()
-        vivadoSettings.board = boardField.text.trim()
-        vivadoSettings.part = partField.text.trim()
-        vivadoSettings.ipRepoPath = ipRepoPathField.text.trim()
+        vs.vivadoPath  = vivadoPathField.text.trim()
+        vs.board       = boardField.text.trim()
+        vs.part        = partField.text.trim()
+        vs.ipRepoPath  = ipRepoPathField.text.trim()
 
-        linterSettings.topFolder = topFolderField.text.trim().ifEmpty { null }
-        linterSettings.linterType = linterTypeComboBox.selectedItem as LinterSettingsState.LinterType
-        linterSettings.iverilogPath = iverilogPathField.text.trim()
-        linterSettings.verilatorPath = verilatorPathField.text.trim()
+        val previousTopFolder = ls.topFolder
+        val newTopFolder = topFolderField.text.trim().ifEmpty { null }
+        ls.topFolder   = newTopFolder
 
-        if (previousTopFolder != linterSettings.topFolder) {
+        // Validate and apply top file
+        val rawTopFile = topFileField.text.trim()
+        val newTopFile = if (rawTopFile.isEmpty()) {
+            null
+        } else if (newTopFolder != null && rawTopFile.startsWith(newTopFolder)) {
+            rawTopFile
+        } else {
+            // Top file no longer inside the (possibly changed) top folder → clear it
+            topFileField.text = ""
+            null
+        }
+
+        // Auto-clear top file when top folder is cleared
+        if (newTopFolder == null) {
+            topFileField.text = ""
+            ls.topFile = null
+        } else {
+            ls.topFile = newTopFile
+        }
+
+        ls.linterType    = linterTypeComboBox.selectedItem as LinterSettingsState.LinterType
+        ls.iverilogPath  = iverilogPathField.text.trim()
+        ls.verilatorPath = verilatorPathField.text.trim()
+
+        if (previousTopFolder != ls.topFolder || ls.topFile != newTopFile) {
             ProjectView.getInstance(project).refresh()
         }
+
+        stopBlinking()
     }
 
     fun resetFromState() {
         if (project.isDisposed) return
 
-        val vivadoSettings = VivadoSettingsState.getInstance(project)
-        val linterSettings = LinterSettingsState.getInstance(project)
+        val vs = VivadoSettingsState.getInstance(project)
+        val ls = LinterSettingsState.getInstance(project)
 
-        vivadoPathField.text = vivadoSettings.vivadoPath
-        boardField.text = vivadoSettings.board
-        partField.text = vivadoSettings.part
-        ipRepoPathField.text = vivadoSettings.ipRepoPath
+        vivadoPathField.text    = vs.vivadoPath
+        boardField.text          = vs.board
+        partField.text           = vs.part
+        ipRepoPathField.text     = vs.ipRepoPath
 
-        topFolderField.text = linterSettings.topFolder.orEmpty()
-        linterTypeComboBox.selectedItem = linterSettings.linterType
-        iverilogPathField.text = linterSettings.iverilogPath
-        verilatorPathField.text = linterSettings.verilatorPath
+        topFolderField.text     = ls.topFolder.orEmpty()
+        topFileField.text       = ls.topFile.orEmpty()
+        linterTypeComboBox.selectedItem = ls.linterType
+        iverilogPathField.text  = ls.iverilogPath
+        verilatorPathField.text = ls.verilatorPath
+
+        stopBlinking()
     }
 
-    private fun buildContent(showActionButtons: Boolean): JComponent {
-        val iverilogPanel = JPanel(BorderLayout(5, 0)).apply {
-            add(iverilogPathField, BorderLayout.CENTER)
-            add(testIverilogButton, BorderLayout.EAST)
+    /** Must be called when the panel is no longer needed (Configurable.disposeUIResources). */
+    fun dispose() {
+        stopBlinking()
+        if (!project.isDisposed) {
+            LinterSettingsBroadcaster.getInstance(project).unsubscribe(externalChangeListener)
+        }
+    }
+
+    /**
+     * Subscribe to external settings changes (right-click actions) so the panel
+     * stays in sync without requiring the user to manually refresh.
+     */
+    private fun subscribeToExternalChanges() {
+        if (project.isDisposed) return
+        LinterSettingsBroadcaster.getInstance(project).subscribe(externalChangeListener)
+    }
+
+    // -------------------------------------------------------------------------
+    // Browse listeners
+    // -------------------------------------------------------------------------
+    private fun setupBrowseListeners() {
+        vivadoPathField.addBrowseFolderListener("Select Vivado Executable", null, project,
+            FileChooserDescriptorFactory.createSingleFileDescriptor())
+
+        ipRepoPathField.addBrowseFolderListener("Select IP Repository Directory", null, project,
+            FileChooserDescriptorFactory.createSingleFolderDescriptor())
+
+        topFolderField.addBrowseFolderListener("Select Verilog Top Folder", null, project,
+            FileChooserDescriptorFactory.createSingleFolderDescriptor())
+
+        topFileField.addBrowseFolderListener("Select Top Verilog File", null, project,
+            FileChooserDescriptorFactory.createSingleFileDescriptor()
+                .withFileFilter { f -> f.extension?.lowercase() in listOf("v", "vh", "sv", "svh") })
+
+        iverilogPathField.addBrowseFolderListener("Select Icarus Verilog Executable", null, project,
+            FileChooserDescriptorFactory.createSingleFileDescriptor())
+
+        verilatorPathField.addBrowseFolderListener("Select Verilator Executable", null, project,
+            FileChooserDescriptorFactory.createSingleFileDescriptor())
+    }
+
+    // -------------------------------------------------------------------------
+    // Test buttons — run on a pooled thread so EDT is not blocked
+    // -------------------------------------------------------------------------
+    private fun setupTestButtons() {
+        testIverilogButton.addActionListener {
+            val path = iverilogPathField.text.trim()
+            testIverilogButton.isEnabled = false
+            ApplicationManager.getApplication().executeOnPooledThread {
+                val (ok, msg) = IcarusVerilogLinter().verifyTool(path)
+                SwingUtilities.invokeLater {
+                    testIverilogButton.isEnabled = true
+                    if (ok) Messages.showInfoMessage(project, msg, "Linter Verification")
+                    else    Messages.showErrorDialog(project, msg, "Linter Verification")
+                }
+            }
         }
 
-        val verilatorPanel = JPanel(BorderLayout(5, 0)).apply {
-            add(verilatorPathField, BorderLayout.CENTER)
+        testVerilatorButton.addActionListener {
+            val path = verilatorPathField.text.trim()
+            testVerilatorButton.isEnabled = false
+            ApplicationManager.getApplication().executeOnPooledThread {
+                val (ok, msg) = VerilatorLinter().verifyTool(path)
+                SwingUtilities.invokeLater {
+                    testVerilatorButton.isEnabled = true
+                    if (ok) Messages.showInfoMessage(project, msg, "Linter Verification")
+                    else    Messages.showErrorDialog(project, msg, "Linter Verification")
+                }
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Apply / Reset / Help buttons
+    // -------------------------------------------------------------------------
+    private fun setupActionButtons() {
+        applyButton.addActionListener { applyToState() }
+        resetButton.addActionListener { resetFromState() }
+        helpButton.addActionListener  { HdlTutorialDialog(project).show() }
+    }
+
+    // -------------------------------------------------------------------------
+    // Change listeners — start blinking when any field is edited
+    // -------------------------------------------------------------------------
+    private fun setupChangeListeners() {
+        val dl = object : DocumentListener {
+            override fun insertUpdate(e: DocumentEvent?)  = onFieldChanged()
+            override fun removeUpdate(e: DocumentEvent?)  = onFieldChanged()
+            override fun changedUpdate(e: DocumentEvent?) = onFieldChanged()
+        }
+        vivadoPathField.textField.document.addDocumentListener(dl)
+        boardField.document.addDocumentListener(dl)
+        partField.document.addDocumentListener(dl)
+        ipRepoPathField.textField.document.addDocumentListener(dl)
+        topFolderField.textField.document.addDocumentListener(dl)
+        topFileField.textField.document.addDocumentListener(dl)
+        iverilogPathField.textField.document.addDocumentListener(dl)
+        verilatorPathField.textField.document.addDocumentListener(dl)
+        linterTypeComboBox.addItemListener { onFieldChanged() }
+    }
+
+    private fun onFieldChanged() {
+        if (!isModified()) {
+            stopBlinking()
+            return
+        }
+        startBlinking()
+    }
+
+    // -------------------------------------------------------------------------
+    // Blink logic
+    // -------------------------------------------------------------------------
+    private fun startBlinking() {
+        if (blinkTimer?.isRunning == true) return
+        blinkTimer = Timer(550) {
+            blinkState = !blinkState
+            unsavedLabel.isVisible = blinkState
+            if (showActionButtons) {
+                applyButton.foreground = if (blinkState) Color(210, 100, 0) else defaultApplyFg
+            }
+        }.also { it.start() }
+        // Show immediately on first change
+        unsavedLabel.isVisible = true
+        if (showActionButtons) applyButton.foreground = Color(210, 100, 0)
+    }
+
+    private fun stopBlinking() {
+        blinkTimer?.stop()
+        blinkTimer = null
+        blinkState = false
+        unsavedLabel.isVisible = false
+        applyButton.foreground = defaultApplyFg
+    }
+
+    // -------------------------------------------------------------------------
+    // Build UI
+    // -------------------------------------------------------------------------
+    private fun buildContent(): JComponent {
+        // Top bar: Help button (right-aligned) + unsaved indicator
+        val topBar = JPanel(BorderLayout(8, 0)).apply {
+            val helpPanel = JPanel(FlowLayout(FlowLayout.RIGHT, 0, 0)).apply {
+                add(helpButton)
+            }
+            add(unsavedLabel, BorderLayout.WEST)
+            add(helpPanel,    BorderLayout.EAST)
+            maximumSize = Dimension(Int.MAX_VALUE, 28)
+        }
+
+        val iverilogRow = JPanel(BorderLayout(5, 0)).apply {
+            add(iverilogPathField,  BorderLayout.CENTER)
+            add(testIverilogButton, BorderLayout.EAST)
+        }
+        val verilatorRow = JPanel(BorderLayout(5, 0)).apply {
+            add(verilatorPathField,  BorderLayout.CENTER)
             add(testVerilatorButton, BorderLayout.EAST)
         }
 
         val builder = FormBuilder.createFormBuilder()
+            .addComponent(topBar)
+            .addSeparator()
             .addComponent(TitledSeparator("Vivado"))
-            .addLabeledComponent(JBLabel("Executable Path:"), vivadoPathField, 1, false)
-            .addLabeledComponent(JBLabel("Board:"), boardField, 1, false)
-            .addLabeledComponent(JBLabel("Part:"), partField, 1, false)
-            .addLabeledComponent(JBLabel("IP Repository:"), ipRepoPathField, 1, false)
+            .addLabeledComponent(JBLabel("Executable Path:"), vivadoPathField,   1, false)
+            .addLabeledComponent(JBLabel("Board:"),           boardField,         1, false)
+            .addLabeledComponent(JBLabel("Part:"),            partField,          1, false)
+            .addLabeledComponent(JBLabel("IP Repository:"),   ipRepoPathField,    1, false)
             .addSeparator()
             .addComponent(TitledSeparator("Verilog Linter"))
-            .addLabeledComponent(JBLabel("Top Folder:"), topFolderField, 1, false)
-            .addLabeledComponent(JBLabel("Active Linter:"), linterTypeComboBox, 1, false)
-            .addLabeledComponent(JBLabel("Iverilog Path:"), iverilogPanel, 1, false)
-            .addLabeledComponent(JBLabel("Verilator Path:"), verilatorPanel, 1, false)
+            .addLabeledComponent(JBLabel("Top Folder:"),      topFolderField,     1, false)
+            .addLabeledComponent(JBLabel("Top File:"),        topFileField,       1, false)
+            .addLabeledComponent(JBLabel("Active Linter:"),   linterTypeComboBox, 1, false)
+            .addLabeledComponent(JBLabel("Iverilog Path:"),   iverilogRow,        1, false)
+            .addLabeledComponent(JBLabel("Verilator Path:"),  verilatorRow,       1, false)
 
         if (showActionButtons) {
             builder
                 .addSeparator()
-                .addComponent(JPanel().apply {
+                .addComponent(JPanel(FlowLayout(FlowLayout.LEFT)).apply {
                     add(applyButton)
                     add(resetButton)
                 })
         }
 
-        val formPanel = builder
-            .addComponentFillVertically(JPanel(), 0)
-            .panel
+        val formPanel = builder.addComponentFillVertically(JPanel(), 0).panel
 
         return JPanel(BorderLayout()).apply {
             add(JBScrollPane(formPanel), BorderLayout.CENTER)

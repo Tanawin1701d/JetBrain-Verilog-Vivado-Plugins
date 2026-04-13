@@ -10,9 +10,10 @@ import com.intellij.openapi.project.Project
     storages = [Storage("verilogLinterSettings.xml")]
 )
 class LinterSettingsState : PersistentStateComponent<LinterSettingsState.State> {
-    
+
     data class State(
         var topFolder: String? = null,
+        var topFile: String? = null,
         var linterType: LinterType = LinterType.IVERILOG,
         var iverilogPath: String = "/usr/bin/iverilog",
         var verilatorPath: String = "/usr/bin/verilator"
@@ -29,6 +30,12 @@ class LinterSettingsState : PersistentStateComponent<LinterSettingsState.State> 
         get() = myState.topFolder
         set(value) {
             myState.topFolder = value
+        }
+
+    var topFile: String?
+        get() = myState.topFile
+        set(value) {
+            myState.topFile = value
         }
 
     var linterType: LinterType

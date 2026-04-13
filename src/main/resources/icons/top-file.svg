@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <!-- Document background -->
+  <path d="M2.5 1C2.2 1 2 1.2 2 1.5v13c0 .3.2.5.5.5h11c.3 0 .5-.2.5-.5V4.8L10.2 1z" fill="#4CAF50"/>
+  <!-- Folded corner -->
+  <path d="M10.2 1v3.3c0 .3.2.5.5.5H14z" fill="#2E7D32"/>
+  <!-- Gold star (top/primary file indicator) -->
+  <polygon points="8,3.8 8.85,6.4 11.6,6.4 9.4,7.95 10.2,10.55 8,9 5.8,10.55 6.6,7.95 4.4,6.4 7.15,6.4"
+           fill="#FFD700" stroke="#F9A825" stroke-width="0.3"/>
+</svg>

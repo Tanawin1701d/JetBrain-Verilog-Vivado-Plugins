@@ -1,45 +1,55 @@
 package com.hdl.verilog.linter
 
 import com.intellij.openapi.vfs.VirtualFile
-import java.io.File
 
 /**
  * Interface for Verilog linters
  */
 interface VerilogLinter {
-    /**
-     * Name of the linter
-     */
+    /** Name of the linter */
     val name: String
 
     /**
-     * Check if the linter is available on the system
-     * @param toolPath Custom path to the linter tool
+     * Check if the linter binary is reachable and exits successfully.
+     * Used by the annotator before each lint run.
      */
     fun isAvailable(toolPath: String? = null): Boolean
 
     /**
-     * Lint a Verilog file
-     * @param toolPath Custom path to the linter tool
-     * @param file The file to lint (VirtualFile for metadata and path)
-     * @param content The actual content of the file (to handle unsaved changes)
-     * @param topFolder The top folder for context (all files in this folder are accessible)
-     * @return Result object containing the lint results and the raw output
+     * Deeply verify that the binary at [toolPath] is actually this linter.
+     * Checks file existence/executability (for absolute paths) and inspects
+     * the version output to confirm identity.
+     * @return Pair(ok, human-readable message)
      */
-    fun lint(toolPath: String?, file: VirtualFile, content: String, topFolder: VirtualFile?): LinterOutput
+    fun verifyTool(toolPath: String): Pair<Boolean, String>
+
+    /**
+     * Lint a Verilog/SV file.
+     * @param toolPath  Absolute path or system-PATH name of the linter binary.
+     * @param file      The file being linted (for path metadata).
+     * @param content   Actual file content (may differ from disk for unsaved buffers).
+     * @param topFolder All files under this folder are passed to the linter for
+     *                  cross-module resolution. Null = single-file mode.
+     * @param topFile   The designated top-level file inside [topFolder]; its module
+     *                  name is forwarded as the elaboration entry-point flag.
+     *                  Null = no explicit top module.
+     */
+    fun lint(
+        toolPath: String?,
+        file: VirtualFile,
+        content: String,
+        topFolder: VirtualFile?,
+        topFile: VirtualFile? = null
+    ): LinterOutput
 }
 
-/**
- * Result of the linting process
- */
+/** Aggregated result of a lint run. */
 data class LinterOutput(
     val results: List<LintResult>,
     val rawOutput: String
 )
 
-/**
- * Result of linting a file
- */
+/** A single diagnostic produced by the linter. */
 data class LintResult(
     val file: String,
     val line: Int,
@@ -47,7 +57,5 @@ data class LintResult(
     val severity: Severity,
     val message: String
 ) {
-    enum class Severity {
-        ERROR, WARNING, INFO
-    }
+    enum class Severity { ERROR, WARNING, INFO }
 }

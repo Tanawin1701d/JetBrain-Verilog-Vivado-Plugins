@@ -26,5 +26,7 @@ class HdlSettingsToolWindowContent(project: Project) : Disposable {
 
     fun getContent(): JComponent = settingsPanel.getComponent()
 
-    override fun dispose() {}
+    override fun dispose() {
+        settingsPanel.dispose()
+    }
 }

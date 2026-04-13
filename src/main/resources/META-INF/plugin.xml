@@ -1,19 +1,21 @@
 <idea-plugin>
     <id>com.hdl.verilog-vivado-plugin</id>
-    <name>Verilog and Vivado Support</name>
+    <name>HDL and Vivado Support</name>
     <vendor email="tanawin1701d@outlook.com" url="https://github.com/Tanawin1701d/JetBrain-Verilog-Vivado-Plugins">Merge Panic Society</vendor>
 
     <description><![CDATA[
-    IntelliJ plugin for Verilog development with Vivado integration.<br>
+    IntelliJ plugin for HDL (Verilog/SystemVerilog) development with Xilinx Vivado integration.<br>
     <br>
     Features:<br>
     <ul>
         <li>Verilog and Tcl syntax highlighting and auto-completion</li>
         <li>Tcl code folding for braced blocks and procs</li>
-        <li>Generalized linter interface with Icarus Verilog support</li>
-        <li>Vivado integration for IP composition, project building, and management</li>
-        <li>Run Tcl scripts directly from the editor/project view</li>
+        <li>Real-time linting with Icarus Verilog or Verilator</li>
+        <li>Top Folder and Top File selection for accurate multi-file linting</li>
+        <li>Vivado integration: IP composition, project building, and management</li>
+        <li>Run Tcl/XDC scripts directly from the editor or project view</li>
         <li>Configurable Vivado path, board, and part settings</li>
+        <li>Built-in step-by-step tutorial (Help button in settings)</li>
     </ul>
   ]]></description>
 
@@ -27,19 +29,19 @@
                   fieldName="INSTANCE"
                   language="Verilog"
                   extensions="v;vh;sv;svh"/>
-        
+
         <lang.parserDefinition language="Verilog"
                                implementationClass="com.hdl.verilog.VerilogParserDefinition"/>
-        
+
         <lang.syntaxHighlighterFactory language="Verilog"
                                        implementationClass="com.hdl.verilog.VerilogSyntaxHighlighterFactory"/>
-        
+
         <lang.commenter language="Verilog"
                        implementationClass="com.hdl.verilog.VerilogCommenter"/>
-        
+
         <lang.braceMatcher language="Verilog"
                           implementationClass="com.hdl.verilog.VerilogBraceMatcher"/>
-        
+
         <completion.contributor language="Verilog"
                                implementationClass="com.hdl.verilog.VerilogCompletionContributor"/>
 
@@ -58,7 +60,10 @@
 
         <completion.contributor language="Tcl"
                                implementationClass="com.hdl.tcl.TclCompletionContributor"/>
-        
+
+        <colorSettingsPage implementation="com.hdl.verilog.VerilogColorSettingsPage"/>
+        <colorSettingsPage implementation="com.hdl.tcl.TclColorSettingsPage"/>
+
         <lang.foldingBuilder language="Tcl"
                             implementationClass="com.hdl.tcl.TclFoldingBuilder"/>
 
@@ -66,6 +71,7 @@
         <externalAnnotator language="Verilog"
                           implementationClass="com.hdl.verilog.linter.VerilogExternalAnnotator"/>
 
+        <!-- Project view decoration for Top Folder and Top File -->
         <projectViewNodeDecorator implementation="com.hdl.verilog.TopFolderProjectViewDecorator"/>
 
         <!-- Settings -->
@@ -73,22 +79,24 @@
                            instance="com.hdl.settings.HdlSettingsConfigurable"
                            id="com.hdl.settings.HdlSettingsConfigurable"
                            displayName="HDL Settings"/>
-        
+
         <projectService serviceImplementation="com.hdl.vivado.VivadoSettingsState"/>
         <projectService serviceImplementation="com.hdl.verilog.linter.LinterSettingsState"/>
+        <projectService serviceImplementation="com.hdl.verilog.linter.LinterSettingsBroadcaster"/>
 
         <!-- Notification Group -->
         <notificationGroup id="Vivado" displayType="BALLOON"/>
-        
+
+        <!-- Tool Windows -->
         <toolWindow id="HDL Settings"
-                    anchor="right" 
+                    anchor="right"
                     factoryClass="com.hdl.settings.HdlSettingsToolWindowFactory"
-                    icon="com.hdl.verilog.VerilogIcons.FILE"/>
+                    icon="com.hdl.verilog.VerilogIcons.HDL_PANEL"/>
 
         <toolWindow id="Verilog Linter Debugger"
                     anchor="bottom"
                     factoryClass="com.hdl.verilog.linter.LinterDebuggerToolWindowFactory"
-                    icon="com.hdl.verilog.VerilogIcons.FILE"/>
+                    icon="com.hdl.verilog.VerilogIcons.HDL_PANEL"/>
     </extensions>
 
     <actions>
@@ -119,13 +127,20 @@
                     text="Open Project"
                     description="Open an existing Vivado project"/>
         </group>
-        
-        <!-- Linter Actions -->
+
+        <!-- Linter Context Actions -->
         <action id="com.hdl.verilog.SelectTopFolderAction"
                 class="com.hdl.verilog.actions.SelectTopFolderAction"
                 text="Set as Verilog Top Folder"
                 description="Set this folder as the top folder for linting">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="VivadoActionGroup"/>
+        </action>
+
+        <action id="com.hdl.verilog.SelectTopFileAction"
+                class="com.hdl.verilog.actions.SelectTopFileAction"
+                text="Set as Verilog Top File"
+                description="Set this file as the elaboration entry-point for linting">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="com.hdl.verilog.SelectTopFolderAction"/>
         </action>
     </actions>
 </idea-plugin>

@@ -1,5 +1,6 @@
 package com.hdl.verilog.actions
 
+import com.hdl.verilog.linter.LinterSettingsBroadcaster
 import com.hdl.verilog.linter.LinterSettingsState
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -12,21 +13,27 @@ class SelectTopFolderAction : AnAction("Set as Verilog Top Folder") {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun actionPerformed(e: AnActionEvent) {
-        val project = e.project ?: return
+        val project     = e.project ?: return
         val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
 
         if (!virtualFile.isDirectory) {
-            Messages.showErrorDialog(
-                project,
-                "Please select a folder",
-                "Invalid Selection"
-            )
+            Messages.showErrorDialog(project, "Please select a folder", "Invalid Selection")
             return
         }
 
         val settings = LinterSettingsState.getInstance(project)
         settings.topFolder = virtualFile.path
+
+        // If the stored top file is no longer inside the new top folder, clear it
+        val topFile = settings.topFile
+        if (topFile != null && !topFile.startsWith(virtualFile.path)) {
+            settings.topFile = null
+        }
+
         ProjectView.getInstance(project).refresh()
+
+        // Notify the settings panel (and any other subscriber) to refresh its fields
+        LinterSettingsBroadcaster.getInstance(project).notifyChanged()
 
         Messages.showInfoMessage(
             project,
