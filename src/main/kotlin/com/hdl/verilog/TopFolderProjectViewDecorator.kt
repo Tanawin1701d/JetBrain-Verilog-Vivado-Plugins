@@ -21,7 +21,12 @@ class TopFolderProjectViewDecorator : ProjectViewNodeDecorator {
             data.setIcon(VerilogIcons.TOP_FOLDER)
             data.tooltip = "Verilog top folder"
             data.background = JBColor(Color(255, 255, 200), Color(60, 60, 0)) // Soft yellow background
-            data.addText(" [Top Folder]", SimpleTextAttributes.REGULAR_ATTRIBUTES)
+            
+            val originalText = data.presentableText ?: node.name
+            if (originalText != null) {
+                data.addText(originalText, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+            }
+            data.addText(" [Top Folder]", SimpleTextAttributes.GRAY_ATTRIBUTES)
         }
     }
 }
