@@ -2,6 +2,7 @@ package com.hdl.verilog.linter
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.SwingUtilities
 
@@ -13,7 +14,7 @@ import javax.swing.SwingUtilities
  * compatibility issues across IntelliJ releases.
  */
 @Service(Service.Level.PROJECT)
-class LinterSettingsBroadcaster {
+class LinterSettingsBroadcaster(private val project: Project) {
 
     /** Registered callbacks; invoked on the EDT when settings change externally. */
     private val listeners = CopyOnWriteArrayList<() -> Unit>()
@@ -29,7 +30,10 @@ class LinterSettingsBroadcaster {
     /** Fire all registered listeners on the EDT. */
     fun notifyChanged() {
         val snapshot = listeners.toList()
-        SwingUtilities.invokeLater { snapshot.forEach { it() } }
+        SwingUtilities.invokeLater {
+            snapshot.forEach { it() }
+            DaemonCodeAnalyzer.getInstance(project).restart()
+        }
     }
 
     companion object {

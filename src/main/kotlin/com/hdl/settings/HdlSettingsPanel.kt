@@ -120,6 +120,10 @@ class HdlSettingsPanel(
         val vs = VivadoSettingsState.getInstance(project)
         val ls = LinterSettingsState.getInstance(project)
 
+        val previousLinterType = ls.linterType
+        val previousIverilogPath = ls.iverilogPath
+        val previousVerilatorPath = ls.verilatorPath
+
         vs.vivadoPath  = vivadoPathField.text.trim()
         vs.board       = boardField.text.trim()
         vs.part        = partField.text.trim()
@@ -133,8 +137,12 @@ class HdlSettingsPanel(
         ls.iverilogPath  = iverilogPathField.text.trim()
         ls.verilatorPath = verilatorPathField.text.trim()
 
-        if (previousTopFolder != ls.topFolder) {
+        if (previousTopFolder != ls.topFolder ||
+            previousLinterType != ls.linterType ||
+            previousIverilogPath != ls.iverilogPath ||
+            previousVerilatorPath != ls.verilatorPath) {
             ProjectView.getInstance(project).refresh()
+            LinterSettingsBroadcaster.getInstance(project).notifyChanged()
         }
 
         stopBlinking()
