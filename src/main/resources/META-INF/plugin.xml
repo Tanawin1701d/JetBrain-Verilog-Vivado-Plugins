@@ -11,7 +11,7 @@
         <li>Verilog and Tcl syntax highlighting and auto-completion</li>
         <li>Tcl code folding for braced blocks and procs</li>
         <li>Real-time linting with Icarus Verilog or Verilator</li>
-        <li>Top Folder and Top File selection for accurate multi-file linting</li>
+        <li>Top Folder selection for accurate multi-file linting</li>
         <li>Vivado integration: IP composition, project building, and management</li>
         <li>Run Tcl/XDC scripts directly from the editor or project view</li>
         <li>Configurable Vivado path, board, and part settings</li>
@@ -71,7 +71,7 @@
         <externalAnnotator language="Verilog"
                           implementationClass="com.hdl.verilog.linter.VerilogExternalAnnotator"/>
 
-        <!-- Project view decoration for Top Folder and Top File -->
+        <!-- Project view decoration for Top Folder -->
         <projectViewNodeDecorator implementation="com.hdl.verilog.TopFolderProjectViewDecorator"/>
 
         <!-- Settings -->
@@ -134,13 +134,6 @@
                 text="Set as Verilog Top Folder"
                 description="Set this folder as the top folder for linting">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="VivadoActionGroup"/>
-        </action>
-
-        <action id="com.hdl.verilog.SelectTopFileAction"
-                class="com.hdl.verilog.actions.SelectTopFileAction"
-                text="Set as Verilog Top File"
-                description="Set this file as the elaboration entry-point for linting">
-            <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="com.hdl.verilog.SelectTopFolderAction"/>
         </action>
     </actions>
 </idea-plugin>

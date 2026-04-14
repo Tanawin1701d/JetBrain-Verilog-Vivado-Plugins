@@ -67,7 +67,6 @@ class IcarusVerilogLinter : VerilogLinter {
         file: VirtualFile,
         content: String,
         topFolder: VirtualFile?,
-        topFile: VirtualFile?,
         excludePaths: Set<String>
     ): LinterOutput {
         val results    = mutableListOf<LintResult>()
@@ -80,13 +79,6 @@ class IcarusVerilogLinter : VerilogLinter {
             FileUtil.writeToFile(tempFile, content)
 
             val commandLine = GeneralCommandLine(path, "-t", "null")
-
-            // Pass the top-module name as the elaboration entry-point (-s flag)
-//            val topModuleName = topFile?.let { resolveTopModuleName(it, file, content) }
-//            if (topModuleName != null) {
-//                commandLine.addParameter("-s")
-//                commandLine.addParameter(topModuleName)
-//            }
 
             if (topFolder != null) {
                 // Use java.io.File.walkTopDown() to collect files from disk directly.
@@ -171,20 +163,6 @@ class IcarusVerilogLinter : VerilogLinter {
             .filter { it.isFile && it.extension.lowercase() in verilogExts }
             .map  { it.canonicalPath }
             .toList()
-    }
-
-    private fun resolveTopModuleName(topFile: VirtualFile, currentFile: VirtualFile, content: String): String? {
-        val topContent = if (topFile.path == currentFile.path) {
-            content
-        } else {
-            try { topFile.contentsToByteArray().toString(Charsets.UTF_8) } catch (e: Exception) { return null }
-        }
-        return extractModuleName(topContent)
-    }
-
-    private fun extractModuleName(content: String): String? {
-        val regex = Regex("""(?:^|[\r\n])\s*module\s+(\w+)""")
-        return regex.find(content)?.groupValues?.get(1)
     }
 
     private fun parseLintOutput(

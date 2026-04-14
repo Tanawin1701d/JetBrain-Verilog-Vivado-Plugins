@@ -31,9 +31,6 @@ interface VerilogLinter {
      * @param content   Actual file content (may differ from disk for unsaved buffers).
      * @param topFolder All files under this folder are passed to the linter for
      *                  cross-module resolution. Null = single-file mode.
-     * @param topFile   The designated top-level file inside [topFolder]; its module
-     *                  name is forwarded as the elaboration entry-point flag.
-     *                  Null = no explicit top module.
      * @param excludePaths Paths to be excluded from the linting run (useful for multi-pass linting).
      */
     fun lint(
@@ -42,7 +39,6 @@ interface VerilogLinter {
         file: VirtualFile,
         content: String,
         topFolder: VirtualFile?,
-        topFile: VirtualFile? = null,
         excludePaths: Set<String> = emptySet()
     ): LinterOutput
 }

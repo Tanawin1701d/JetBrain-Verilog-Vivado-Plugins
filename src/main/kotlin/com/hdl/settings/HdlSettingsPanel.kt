@@ -42,13 +42,10 @@ class HdlSettingsPanel(
     // Linter fields
     // -------------------------------------------------------------------------
     private val topFolderField    = TextFieldWithBrowseButton()
-    private val topFileField      = TextFieldWithBrowseButton()
     private val unsetTopFolderButton = JButton("Unset")
     private val linterTypeComboBox = ComboBox(LinterSettingsState.LinterType.entries.toTypedArray())
     private val iverilogPathField  = TextFieldWithBrowseButton()
     private val verilatorPathField = TextFieldWithBrowseButton()
-    private val isTopFileFrozenCheckbox = JCheckBox("Hide Top File selection")
-    private val topFileLabel = JBLabel("Top File:")
 
     // -------------------------------------------------------------------------
     // Buttons
@@ -110,8 +107,6 @@ class HdlSettingsPanel(
                partField.text          != vs.part               ||
                ipRepoPathField.text    != vs.ipRepoPath         ||
                topFolderField.text     != (ls.topFolder ?: "")  ||
-               topFileField.text       != (ls.topFile   ?: "")  ||
-               isTopFileFrozenCheckbox.isSelected != ls.isTopFileFrozen ||
                linterTypeComboBox.selectedItem != ls.linterType  ||
                iverilogPathField.text  != ls.iverilogPath       ||
                verilatorPathField.text != ls.verilatorPath
@@ -128,37 +123,15 @@ class HdlSettingsPanel(
         vs.part        = partField.text.trim()
         vs.ipRepoPath  = ipRepoPathField.text.trim()
 
-        ls.isTopFileFrozen = isTopFileFrozenCheckbox.isSelected
-
         val previousTopFolder = ls.topFolder
         val newTopFolder = topFolderField.text.trim().ifEmpty { null }
         ls.topFolder   = newTopFolder
-
-        // Validate and apply top file
-        val rawTopFile = topFileField.text.trim()
-        val newTopFile = if (rawTopFile.isEmpty()) {
-            null
-        } else if (newTopFolder != null && rawTopFile.startsWith(newTopFolder)) {
-            rawTopFile
-        } else {
-            // Top file no longer inside the (possibly changed) top folder → clear it
-            topFileField.text = ""
-            null
-        }
-
-        // Auto-clear top file when top folder is cleared
-        if (newTopFolder == null) {
-            topFileField.text = ""
-            ls.topFile = null
-        } else {
-            ls.topFile = newTopFile
-        }
 
         ls.linterType    = linterTypeComboBox.selectedItem as LinterSettingsState.LinterType
         ls.iverilogPath  = iverilogPathField.text.trim()
         ls.verilatorPath = verilatorPathField.text.trim()
 
-        if (previousTopFolder != ls.topFolder || ls.topFile != newTopFile) {
+        if (previousTopFolder != ls.topFolder) {
             ProjectView.getInstance(project).refresh()
         }
 
@@ -177,22 +150,12 @@ class HdlSettingsPanel(
         ipRepoPathField.text    = vs.ipRepoPath
 
         topFolderField.text     = ls.topFolder.orEmpty()
-        topFileField.text       = ls.topFile.orEmpty()
-        isTopFileFrozenCheckbox.isSelected = ls.isTopFileFrozen
-
-        // Update UI based on freeze state
-        updateLockedFields(ls.isTopFileFrozen)
 
         linterTypeComboBox.selectedItem = ls.linterType
         iverilogPathField.text  = ls.iverilogPath
         verilatorPathField.text = ls.verilatorPath
 
         stopBlinking()
-    }
-
-    private fun updateLockedFields(isFrozen: Boolean) {
-        topFileLabel.isVisible = !isFrozen
-        topFileField.isVisible = !isFrozen
     }
 
     /** Must be called when the panel is no longer needed (Configurable.disposeUIResources). */
@@ -228,10 +191,6 @@ class HdlSettingsPanel(
 
         topFolderField.addBrowseFolderListener("Select Verilog Top Folder", null, project,
             FileChooserDescriptorFactory.createSingleFolderDescriptor())
-
-        topFileField.addBrowseFolderListener("Select Top Verilog File", null, project,
-            FileChooserDescriptorFactory.createSingleFileDescriptor()
-                .withFileFilter { f -> f.extension?.lowercase() in listOf("v", "vh", "sv", "svh") })
 
         iverilogPathField.addBrowseFolderListener("Select Icarus Verilog Executable", null, project,
             FileChooserDescriptorFactory.createSingleFileDescriptor())
@@ -294,14 +253,9 @@ class HdlSettingsPanel(
         partField.document.addDocumentListener(dl)
         ipRepoPathField.textField.document.addDocumentListener(dl)
         topFolderField.textField.document.addDocumentListener(dl)
-        topFileField.textField.document.addDocumentListener(dl)
         iverilogPathField.textField.document.addDocumentListener(dl)
         verilatorPathField.textField.document.addDocumentListener(dl)
         linterTypeComboBox.addItemListener { onFieldChanged() }
-        isTopFileFrozenCheckbox.addActionListener {
-            updateLockedFields(isTopFileFrozenCheckbox.isSelected)
-            onFieldChanged()
-        }
     }
 
     private fun onFieldChanged() {
@@ -380,8 +334,6 @@ class HdlSettingsPanel(
                 font = font.deriveFont(Font.ITALIC, 11f)
                 foreground = Color.GRAY
             })
-            .addLabeledComponent(topFileLabel,                topFileField,       1, false)
-            .addComponentToRightColumn(isTopFileFrozenCheckbox)
             .addLabeledComponent(JBLabel("Active Linter:"),   linterTypeComboBox, 1, false)
             .addLabeledComponent(JBLabel("Iverilog Path:"),   iverilogRow,        1, false)
             .addLabeledComponent(JBLabel("Verilator Path:"),  verilatorRow,       1, false)

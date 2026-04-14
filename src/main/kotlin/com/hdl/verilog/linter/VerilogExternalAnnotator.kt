@@ -24,7 +24,6 @@ class VerilogExternalAnnotator : ExternalAnnotator<PsiFile, List<LintResult>>() 
 
         val fs = virtualFile.fileSystem
         val topFolder = settings.topFolder?.let { fs.findFileByPath(it) }
-        val topFile   = settings.topFile?.let   { fs.findFileByPath(it) }
 
         val linter = when (settings.linterType) {
             LinterSettingsState.LinterType.IVERILOG  -> IcarusVerilogLinter()
@@ -71,7 +70,7 @@ class VerilogExternalAnnotator : ExternalAnnotator<PsiFile, List<LintResult>>() 
                 ""
             }
 
-            val output = linter.lint(project, toolPath, vFile, content, null, null)
+            val output = linter.lint(project, toolPath, vFile, content, null)
 
             // If there are errors, we consider it a candidate for exclusion from multi-file lint
             val hasSyntaxErrors = output.results.any {
@@ -89,7 +88,7 @@ class VerilogExternalAnnotator : ExternalAnnotator<PsiFile, List<LintResult>>() 
 
         // Pass 2: Global lint excluding "broken" files
         if (topFolder != null) {
-            val globalOutput = linter.lint(project, toolPath, virtualFile, collectedInfo.text, topFolder, topFile, excludedPaths)
+            val globalOutput = linter.lint(project, toolPath, virtualFile, collectedInfo.text, topFolder, excludedPaths)
             
             // Filter results from global output: only add those NOT already found in Pass 1 for the same file/line
             // or just add all and let LinterDebuggerService handle it? 

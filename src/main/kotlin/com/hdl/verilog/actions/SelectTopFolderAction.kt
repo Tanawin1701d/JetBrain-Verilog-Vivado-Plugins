@@ -24,12 +24,6 @@ class SelectTopFolderAction : AnAction("Set as Verilog Top Folder") {
         val settings = LinterSettingsState.getInstance(project)
         settings.topFolder = virtualFile.path
 
-        // If the stored top file is no longer inside the new top folder, clear it
-        val topFile = settings.topFile
-        if (topFile != null && !topFile.startsWith(virtualFile.path)) {
-            settings.topFile = null
-        }
-
         ProjectView.getInstance(project).refresh()
 
         // Notify the settings panel (and any other subscriber) to refresh its fields

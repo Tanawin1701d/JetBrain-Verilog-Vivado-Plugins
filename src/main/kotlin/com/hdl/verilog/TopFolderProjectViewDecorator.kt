@@ -17,14 +17,6 @@ class TopFolderProjectViewDecorator : ProjectViewNodeDecorator {
         if (topFolderPath != null && virtualFile.isDirectory && virtualFile.path == topFolderPath) {
             data.setIcon(VerilogIcons.TOP_FOLDER)
             data.tooltip = "Verilog top folder"
-            return
-        }
-
-        // Decorate the top file
-        val topFilePath = settings.topFile
-        if (topFilePath != null && !virtualFile.isDirectory && virtualFile.path == topFilePath) {
-            data.setIcon(VerilogIcons.TOP_FILE)
-            data.tooltip = "Verilog top file (elaboration entry-point)"
         }
     }
 }
