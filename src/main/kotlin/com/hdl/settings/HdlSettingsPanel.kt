@@ -12,6 +12,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.ui.JBColor
+import com.intellij.ui.SideBorder
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
@@ -317,6 +319,7 @@ class HdlSettingsPanel(
         val topFolderRow = JPanel(BorderLayout(5, 0)).apply {
             add(topFolderField, BorderLayout.CENTER)
             add(unsetTopFolderButton, BorderLayout.EAST)
+            border = SideBorder(JBColor.YELLOW, SideBorder.ALL, 2)
         }
 
         val builder = FormBuilder.createFormBuilder()
@@ -330,6 +333,10 @@ class HdlSettingsPanel(
             .addSeparator()
             .addComponent(TitledSeparator("Verilog Linter"))
             .addLabeledComponent(JBLabel("Top Folder:"),      topFolderRow,       1, false)
+            .addComponentToRightColumn(JBLabel("(to check syntax of the of linter please check the top folder if it not work please see the verilog linter debugger panel)").apply {
+                font = font.deriveFont(Font.ITALIC, 11f)
+                foreground = JBColor.YELLOW
+            })
             .addComponentToRightColumn(JBLabel("Leave Top Folder blank to unset and remove icons.").apply {
                 font = font.deriveFont(Font.ITALIC, 11f)
                 foreground = Color.GRAY

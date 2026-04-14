@@ -5,6 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.content.ContentFactory
+import com.intellij.ui.JBColor
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.table.JBTable
@@ -51,6 +53,12 @@ class LinterDebuggerToolWindowContent(private val project: Project) : Disposable
         val splitPane = JSplitPane(JSplitPane.VERTICAL_SPLIT, resultsScrollPane, rawScrollPane)
         splitPane.dividerLocation = 200
 
+        val infoLabel = JBLabel("(to check syntax of the linter please check the top folder; if it does not work, please see the Verilog linter debugger panel below)").apply {
+            foreground = JBColor.YELLOW
+            border = JBUI.Borders.empty(4)
+        }
+
+        mainPanel.add(infoLabel, BorderLayout.NORTH)
         mainPanel.add(splitPane, BorderLayout.CENTER)
 
         // Periodically update the UI
