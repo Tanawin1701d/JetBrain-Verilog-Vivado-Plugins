@@ -31,7 +31,7 @@ kotlin {
 tasks {
     patchPluginXml {
         sinceBuild.set("233")
-        untilBuild.set("253.*")
+        untilBuild.set(provider { null })
         changeNotes.set("""
             <ul>
                 <li>Added Tcl language support (.tcl, .xdc)</li>

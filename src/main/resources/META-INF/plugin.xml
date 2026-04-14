@@ -4,19 +4,21 @@
     <vendor email="tanawin1701d@outlook.com" url="https://github.com/Tanawin1701d/JetBrain-Verilog-Vivado-Plugins">Merge Panic Society</vendor>
 
     <description><![CDATA[
-    IntelliJ plugin for HDL (Verilog/SystemVerilog) development with Xilinx Vivado integration.<br>
+    <b>HDL development and Xilinx Vivado integration for IntelliJ IDEA.</b><br>
     <br>
-    Features:<br>
+    Transform your IDE into a powerful hardware development environment with advanced support for Verilog, SystemVerilog, and Tcl scripts.<br>
+    <br>
+    <b>Core Features:</b><br>
     <ul>
-        <li>Verilog and Tcl syntax highlighting and auto-completion</li>
-        <li>Tcl code folding for braced blocks and procs</li>
-        <li>Real-time linting with Icarus Verilog or Verilator</li>
-        <li>Top Folder selection for accurate multi-file linting</li>
-        <li>Vivado integration: IP composition, project building, and management</li>
-        <li>Run Tcl/XDC scripts directly from the editor or project view</li>
-        <li>Configurable Vivado path, board, and part settings</li>
-        <li>Built-in step-by-step tutorial (Help button in settings)</li>
+        <li><b>Advanced Verilog Support:</b> syntax highlighting, smart auto-completion, and brace matching for .v and .sv files.</li>
+        <li><b>Cross-Module Linting:</b> Intelligent cross-module dependency checks and analysis.</li>
+       
+        <li><b>Vivado Integration:</b> One-click project generation, IP Composer management, and direct Tcl/XDC script execution.</li>
+        <li><b>Professional Linting:</b> Real-time feedback with Icarus Verilog or Verilator. Multi-pass analysis automatically handles project-wide dependencies.</li>
+        <li><b>Smart "Top Folder" Context:</b> Define your project root to resolve cross-module syntax errors and dependencies instantly.</li>
+        <li><b>Productivity Tools:</b> Integrated linter debugger panel, configurable FPGA settings, and built-in tutorials.</li>
     </ul>
+    <i>Streamline your FPGA design cycle and focus on your logic.</i>
   ]]></description>
 
     <depends>com.intellij.modules.platform</depends>

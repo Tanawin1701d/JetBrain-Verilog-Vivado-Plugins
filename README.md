@@ -1,95 +1,35 @@
-# Verilog and Vivado IntelliJ Plugin
+# HDL and Vivado Support for IntelliJ IDEA
 
-An IntelliJ IDEA plugin providing comprehensive Verilog language support and Vivado integration for FPGA development.
+Elevate your FPGA development with professional HDL and Xilinx Vivado integration. This plugin transforms IntelliJ IDEA into a powerful hardware development environment with advanced support for Verilog, SystemVerilog, and Tcl scripts.
 
-## Features
+## Core Features
 
-### 1. Verilog Language Support
+### 1. Advanced Verilog Language Support
+- **Full Syntax Highlighting:** Intelligent highlighting for .v, .vh, .sv, and .svh files.
+- **Smart Auto-completion:** Context-aware suggestions for keywords (module, always, etc.) and system tasks.
+- **Brace Matching:** Reliable matching for parentheses, brackets, and braces.
+- **Indentation Support:** Automatic and proper code indentation for better readability.
 
-#### Syntax Highlighting
-- Full syntax highlighting for Verilog/SystemVerilog files (.v, .vh, .sv, .svh)
-- Keywords, comments, strings, numbers, and operators highlighted
-- Support for both Verilog-2001 and SystemVerilog constructs
+### 2. Comprehensive Tcl/XDC Integration
+- **Full Syntax Highlighting:** Support for Tcl scripts (.tcl) and Xilinx Design Constraints (.xdc).
+- **Vivado-Specific Support:** Smart completion for common Vivado and Xilinx Tcl commands.
+- **Code Folding:** Powerful folding for `proc` bodies, `for` loops, and any braced blocks.
+- **Variable Support:** Intelligent handling of `${var}` variable syntax.
 
-#### Auto-completion
-- Keyword auto-completion (module, always, reg, wire, etc.)
-- System task auto-completion ($display, $monitor, etc.)
-- Context-aware suggestions
+### 3. Professional Real-time Linting
+- **Pluggable Architecture:** Support for multiple linters including Icarus Verilog and Verilator.
+- **Instant Feedback:** Syntax error detection and warning highlighting directly in the editor.
+- **Smart "Top Folder" Context:**
+    - Right-click any folder → **"Set as Verilog Top Folder"**.
+    - **Visual Recognition:** The top folder is marked with a yellow background and a `[Top Folder]` label in the Project View.
+    - **Global Analysis:** Resolves cross-module dependencies and multi-file syntax errors automatically.
+- **Debugger Panel:** Integrated linter output panel with a searchable table of errors and raw console output.
 
-#### Code Features
-- Line and block comment support (//, /* */)
-- Brace matching for parentheses, brackets, and braces
-- Proper indentation support
-
-### 2. Tcl Language Support
-
-#### Syntax Highlighting
-- Full syntax highlighting for Tcl scripts (.tcl) and Xilinx Design Constraints (.xdc)
-- Keywords, Vivado-specific commands, variables, strings, and numbers highlighted
-- Support for `${var}` variable syntax
-
-#### Auto-completion
-- Comprehensive Tcl keyword suggestions
-- Common Vivado and Xilinx Tcl commands (create_bd_cell, set_property, etc.)
-
-#### Code Features
-- Line comment support (#)
-- Code folding for `proc` bodies, `for` loops, and any braced blocks (`{ ... }`)
-- Nested block support for complex scripts
-
-### 3. Linting Support
-
-#### Generalized Linter Interface
-- Pluggable architecture supporting multiple linters
-- Extensible design for adding custom linters
-
-#### Icarus Verilog (iverilog) Integration
-- Real-time syntax error detection
-- Warning and error highlighting in the editor
-- Automatic linting on file save
-
-#### Top Folder Selection
-- Right-click on any folder → "Set as Verilog Top Folder"
-- When set, linter processes all Verilog files in the folder together
-- Enables cross-file dependency checking
-
-### 3. Vivado Integration
-
-#### Configuration
-- Settings → Tools → Vivado Settings
-- Configure:
-  - Vivado installation path (e.g., `/tools/Xilinx/Vivado/2023.2/bin/vivado`)
-  - Target FPGA part (e.g., `xc7a35tcpg236-1`)
-  - Target board (optional)
-
-#### IP Composer
-- Right-click folder → Vivado → Launch Vivado IP Composer
-- Opens Vivado in IP Catalog mode
-- Allows manual IP creation and configuration
-- User exports IP when ready
-
-#### Project Building
-- Right-click folder → Vivado → Build Vivado Project
-- Automatically collects all HDL files recursively
-- Generates Vivado project with proper file hierarchy
-- Supports both Verilog (.v, .sv) and VHDL (.vhd, .vhdl) files
-- Opens Vivado GUI with the created project
-
-#### Run Tcl Script
-- Right-click .tcl or .xdc file → Vivado → Run Tcl Script
-- Launches Vivado in GUI mode and executes the script automatically
-- Convenient for running project creation scripts or timing constraints
-
-#### Open Existing Projects
-- Right-click .xpr file or folder → Vivado → Open Vivado Project
-- Launches Vivado with the existing project
-- Searches for .xpr files in selected directory
-
-#### Synthesis
-- Right-click .xpr file or folder → Vivado → Run Synthesis
-- Runs synthesis in batch mode
-- Opens synthesized design when complete
-- Provides notifications on completion
+### 4. Seamless Vivado Integration
+- **One-Click Project Building:** Automatically generate and open Vivado projects from your HDL source tree.
+- **Interactive IP Management:** Launch and manage Vivado IP Composer directly from the IDE.
+- **Direct Script Execution:** Run Tcl and XDC scripts in Vivado with a single click or shortcut (`Ctrl+Alt+R`).
+- **Project Management:** Open existing `.xpr` projects or run synthesis in batch mode.
 
 ## Installation
 
@@ -102,7 +42,8 @@ An IntelliJ IDEA plugin providing comprehensive Verilog language support and Viv
 ## Prerequisites
 
 ### For Linting
-- Install Icarus Verilog: `sudo apt install iverilog` (Linux) or download from [iverilog.icarus.com](http://iverilog.icarus.com/)
+- **Icarus Verilog:** Install via `sudo apt install iverilog` (Linux) or from [iverilog.icarus.com](http://iverilog.icarus.com/).
+- **Verilator:** (Optional) High-performance linter. Install via `sudo apt install verilator` or from [verilator.org](https://www.verilator.org/).
 
 ### For Vivado Integration
 - Xilinx Vivado installation (2023.2 or later recommended)
@@ -111,14 +52,15 @@ An IntelliJ IDEA plugin providing comprehensive Verilog language support and Viv
 ## Usage
 
 ### Basic Verilog Development
-1. Create or open a .v or .sv file
-2. Start coding with syntax highlighting and auto-completion
-3. Errors from iverilog will appear inline
+1. Create or open a `.v` or `.sv` file.
+2. Start coding with syntax highlighting and auto-completion.
+3. Errors from the active linter (Iverilog or Verilator) will appear inline.
+4. Check the **Verilog Linter Debugger** panel (bottom) for detailed output.
 
 ### Setting Up Linting Context
-1. Right-click the root folder of your Verilog project
-2. Select "Set as Verilog Top Folder"
-3. Now all Verilog files in this folder will be analyzed together
+1. Right-click the root folder of your Verilog project in the Project View.
+2. Select **"Set as Verilog Top Folder"**.
+3. The folder will be highlighted in yellow, and all Verilog files within will be analyzed together for cross-file dependency checking.
 
 ### Creating a Vivado Project
 1. Organize your HDL files in a folder
@@ -150,37 +92,35 @@ An IntelliJ IDEA plugin providing comprehensive Verilog language support and Viv
 - Default board (optional, overrides part if specified)
 
 ### Linter Settings
-- Top folder path (set via context menu action)
-- Linter selection (future: support for multiple linters)
+- **Top Folder:** Designated project root for multi-pass linting.
+- **Active Linter:** Toggle between Icarus Verilog and Verilator.
+- **Binary Paths:** Customizable paths for all tool executables.
 
 ## Architecture
 
-### Verilog Support
-- `VerilogLanguage`: Language definition
-- `VerilogLexer`: Tokenization
-- `VerilogParser`: AST construction
-- `VerilogSyntaxHighlighter`: Color scheme
-- `VerilogCompletionContributor`: Auto-completion
+### Verilog/SystemVerilog Support
+- `VerilogLanguage`: Language definition.
+- `VerilogLexer`: Tokenization (Verilog-2001 and SV support).
+- `VerilogParser`: AST construction.
+- `VerilogSyntaxHighlighter`: Theme-aware coloring.
+- `VerilogExternalAnnotator`: Real-time linter integration and error marking.
+- `TopFolderProjectViewDecorator`: Visual labeling for the top folder.
 
-### Tcl Support
-- `TclLanguage`: Language definition
-- `TclLexer`: Tokenization (supports Tcl and Vivado commands)
-- `TclParser`: AST construction with block detection
-- `TclSyntaxHighlighter`: Color scheme
-- `TclCompletionContributor`: Intelligent suggestions
-- `TclFoldingBuilder`: Code folding logic for braced blocks
+### Tcl/XDC Support
+- `TclLanguage`: Full Tcl support for Vivado-specific commands.
+- `TclFoldingBuilder`: Block-based code folding.
+- `TclCompletionContributor`: Smart suggestions for Tcl and Vivado.
 
 ### Linter Framework
-- `VerilogLinter`: Interface for all linters
-- `IcarusVerilogLinter`: iverilog implementation
-- `VerilogExternalAnnotator`: Integrates linter results into IDE
-- Extensible for additional linters (Verilator, Slang, etc.)
+- `VerilogLinter`: Interface for extending linter support.
+- `IcarusVerilogLinter`: Integration with iverilog.
+- `VerilatorLinter`: High-performance linting with Verilator.
+- `LinterDebuggerService`: Global state management for linter results.
 
 ### Vivado Integration
-- `VivadoSettingsState`: Persistent configuration
-- `VivadoUtils`: TCL script generation and process management
-- Action classes: Context menu handlers
-- Asynchronous process execution
+- `VivadoSettingsState`: Persistent user configuration.
+- `VivadoUtils`: Tcl generation and Vivado process orchestration.
+- `BuildProjectAction`: Automated project generation logic.
 
 ## Adding More Linters
 
