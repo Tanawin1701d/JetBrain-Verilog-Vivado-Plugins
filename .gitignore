@@ -44,5 +44,10 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+
+### Testing ###
 /test_files/test_ip
 /test_files/.idea
+*viva_ip_exec
+*viva_prj_exec
