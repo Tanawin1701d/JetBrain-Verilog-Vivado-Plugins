@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.hdl"
-version = "0.2.0"
+version = "0.2.1"
 
 repositories {
     mavenCentral()
@@ -34,7 +34,11 @@ tasks {
         untilBuild.set(provider { null })
         changeNotes.set("""
             <ul>
-                <li>Added Tcl language support (.tcl, .xdc)</li>
+                <li>Version 0.2.1:</li>
+                <li>Added Vitis support: Open Vitis workspace from folder</li>
+                <li>Added Vitis HLS support: Create HLS Kernel from folder</li>
+                <li>Configurable Vitis path in HDL Settings</li>
+                <li>Tcl language support (.tcl, .xdc)</li>
                 <li>Syntax highlighting for Tcl and Vivado commands</li>
                 <li>Code folding and auto-completion for Tcl</li>
                 <li>New Vivado actions: Run Tcl Script, Open Project, IP Composer</li>

@@ -36,6 +36,7 @@ class HdlSettingsPanel(
     // Vivado fields
     // -------------------------------------------------------------------------
     private val vivadoPathField   = TextFieldWithBrowseButton()
+    private val vitisPathField    = TextFieldWithBrowseButton()
     private val boardField        = JBTextField()
     private val partField         = JBTextField()
     private val ipRepoPathField   = TextFieldWithBrowseButton()
@@ -105,6 +106,7 @@ class HdlSettingsPanel(
         val vs = VivadoSettingsState.getInstance(project)
         val ls = LinterSettingsState.getInstance(project)
         return vivadoPathField.text    != vs.vivadoPath        ||
+               vitisPathField.text     != vs.vitisPath         ||
                boardField.text         != vs.board              ||
                partField.text          != vs.part               ||
                ipRepoPathField.text    != vs.ipRepoPath         ||
@@ -125,6 +127,7 @@ class HdlSettingsPanel(
         val previousVerilatorPath = ls.verilatorPath
 
         vs.vivadoPath  = vivadoPathField.text.trim()
+        vs.vitisPath   = vitisPathField.text.trim()
         vs.board       = boardField.text.trim()
         vs.part        = partField.text.trim()
         vs.ipRepoPath  = ipRepoPathField.text.trim()
@@ -155,6 +158,7 @@ class HdlSettingsPanel(
         val ls = LinterSettingsState.getInstance(project)
 
         vivadoPathField.text    = vs.vivadoPath
+        vitisPathField.text     = vs.vitisPath
         boardField.text         = vs.board
         partField.text          = vs.part
         ipRepoPathField.text    = vs.ipRepoPath
@@ -194,6 +198,9 @@ class HdlSettingsPanel(
             onFieldChanged()
         }
         vivadoPathField.addBrowseFolderListener("Select Vivado Executable", null, project,
+            FileChooserDescriptorFactory.createSingleFileDescriptor())
+
+        vitisPathField.addBrowseFolderListener("Select Vitis Executable", null, project,
             FileChooserDescriptorFactory.createSingleFileDescriptor())
 
         ipRepoPathField.addBrowseFolderListener("Select IP Repository Directory", null, project,
@@ -259,6 +266,7 @@ class HdlSettingsPanel(
             override fun changedUpdate(e: DocumentEvent?) = onFieldChanged()
         }
         vivadoPathField.textField.document.addDocumentListener(dl)
+        vitisPathField.textField.document.addDocumentListener(dl)
         boardField.document.addDocumentListener(dl)
         partField.document.addDocumentListener(dl)
         ipRepoPathField.textField.document.addDocumentListener(dl)
@@ -334,7 +342,8 @@ class HdlSettingsPanel(
             .addComponent(topBar)
             .addSeparator()
             .addComponent(TitledSeparator("Vivado"))
-            .addLabeledComponent(JBLabel("Executable Path:"), vivadoPathField,   1, false)
+            .addLabeledComponent(JBLabel("Vivado Path:"), vivadoPathField,   1, false)
+            .addLabeledComponent(JBLabel("Vitis Path:"),  vitisPathField,    1, false)
             .addLabeledComponent(JBLabel("Board:"),           boardField,         1, false)
             .addLabeledComponent(JBLabel("Part:"),            partField,          1, false)
             .addLabeledComponent(JBLabel("IP Repository:"),   ipRepoPathField,    1, false)

@@ -13,6 +13,7 @@ class VivadoSettingsState : PersistentStateComponent<VivadoSettingsState.State> 
     
     data class State(
         var vivadoPath: String = "/tools/Xilinx/Vivado/2023.2/bin/vivado",
+        var vitisPath: String = "/tools/Xilinx/Vitis/2023.2/bin/vitis",
         var board: String = "",
         var part: String = "xc7a35tcpg236-1",
         var ipRepoPath: String = ""
@@ -24,6 +25,12 @@ class VivadoSettingsState : PersistentStateComponent<VivadoSettingsState.State> 
         get() = myState.vivadoPath
         set(value) {
             myState.vivadoPath = value
+        }
+
+    var vitisPath: String
+        get() = myState.vitisPath
+        set(value) {
+            myState.vitisPath = value
         }
 
     var board: String

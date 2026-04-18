@@ -128,6 +128,15 @@
                     class="com.hdl.vivado.actions.OpenProjectAction"
                     text="Open Project"
                     description="Open an existing Vivado project"/>
+            <separator/>
+            <action id="com.hdl.vivado.actions.OpenVitisAction"
+                    class="com.hdl.vivado.actions.OpenVitisAction"
+                    text="Open Vitis"
+                    description="Open selected folder as Vitis workspace"/>
+            <action id="com.hdl.vivado.actions.CreateHlsAction"
+                    class="com.hdl.vivado.actions.CreateHlsAction"
+                    text="Create HLS Kernel"
+                    description="Create a new Vitis HLS project"/>
         </group>
 
         <!-- Linter Context Actions -->
