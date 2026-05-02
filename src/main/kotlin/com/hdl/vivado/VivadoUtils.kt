@@ -188,6 +188,31 @@ object VivadoUtils {
         return processBuilder.start()
     }
 
+    fun launchVitisUnifiedHls(
+        vitisPath: String,
+        workingDirectory: String,
+        tclScript: String? = null
+    ): Process {
+        val dir = File(workingDirectory)
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw IOException("Failed to create working directory: $workingDirectory")
+        }
+
+        val command = mutableListOf(vitisPath, "-hls")
+        if (tclScript != null) {
+            val scriptFile = File.createTempFile("vitis_hls_script_", ".tcl")
+            scriptFile.writeText(tclScript)
+            scriptFile.deleteOnExit()
+
+            command.add("-f")
+            command.add(scriptFile.absolutePath)
+        }
+
+        val processBuilder = ProcessBuilder(command)
+        processBuilder.directory(dir)
+        return processBuilder.start()
+    }
+
     fun findVivadoProject(folder: VirtualFile): VirtualFile? {
         for (child in folder.children) {
             if (child.extension == "xpr") {

@@ -32,14 +32,13 @@ class CreateHlsAction : AnAction("Create HLS Kernel") {
         if (hlsProjectName.isBlank()) return
 
         val settings = VivadoSettingsState.getInstance(project)
-        // Assuming vitis_hls is in the same bin directory as vitis
-        val vitisHlsPath = settings.vitisPath.replaceAfterLast("/", "vitis_hls")
+        val vitisPath = settings.vitisPath
 
-        if (!File(vitisHlsPath).exists()) {
+        if (!File(vitisPath).exists()) {
             Messages.showErrorDialog(
                 project,
-                "Vitis HLS not found at: $vitisHlsPath\nPlease ensure Vitis path is correct in Settings.",
-                "Vitis HLS Not Found"
+                "Vitis not found at: $vitisPath\nPlease ensure Vitis path is correct in Settings.",
+                "Vitis Not Found"
             )
             return
         }
@@ -70,7 +69,7 @@ class CreateHlsAction : AnAction("Create HLS Kernel") {
                 """.trimIndent()
             }
 
-            VivadoUtils.launchVitisHls(vitisHlsPath, virtualFile.path, tclScript)
+            VivadoUtils.launchVitisUnifiedHls(vitisPath, virtualFile.path, tclScript)
             
             Messages.showInfoMessage(project, "HLS Project '$hlsProjectName' creation started.", "HLS Project Created")
         } catch (ex: Exception) {
