@@ -86,6 +86,11 @@
         <projectService serviceImplementation="com.hdl.verilog.linter.LinterSettingsState"/>
         <projectService serviceImplementation="com.hdl.verilog.linter.LinterSettingsBroadcaster"/>
 
+        <!-- Viva-CoTerm services -->
+        <projectService serviceImplementation="com.hdl.vivado.TclBridgeService"/>
+        <projectService serviceImplementation="com.hdl.vivado.VivadoProcessManager"/>
+        <projectService serviceImplementation="com.hdl.mcp.VivaMcpServer"/>
+
         <!-- Notification Group -->
         <notificationGroup id="Vivado" displayType="BALLOON"/>
 
@@ -98,6 +103,11 @@
         <toolWindow id="Verilog Linter Debugger"
                     anchor="bottom"
                     factoryClass="com.hdl.verilog.linter.LinterDebuggerToolWindowFactory"
+                    icon="com.hdl.verilog.VerilogIcons.HDL_PANEL"/>
+
+        <toolWindow id="Vivado Console"
+                    anchor="bottom"
+                    factoryClass="com.hdl.coterm.VivaCoTermToolWindowFactory"
                     icon="com.hdl.verilog.VerilogIcons.HDL_PANEL"/>
     </extensions>
 
@@ -137,6 +147,11 @@
                     class="com.hdl.vivado.actions.CreateHlsAction"
                     text="Create HLS Kernel"
                     description="Create a new Vitis HLS project"/>
+            <separator/>
+            <action id="com.hdl.vivado.actions.LaunchVivaCoTermAction"
+                    class="com.hdl.vivado.actions.LaunchVivaCoTermAction"
+                    text="Launch Vivado Console"
+                    description="Open the Vivado Console (Viva-CoTerm) and launch a live Vivado session"/>
         </group>
 
         <!-- Linter Context Actions -->

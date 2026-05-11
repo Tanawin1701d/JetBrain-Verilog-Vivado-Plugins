@@ -42,6 +42,14 @@ class HdlSettingsPanel(
     private val ipRepoPathField   = TextFieldWithBrowseButton()
 
     // -------------------------------------------------------------------------
+    // Viva-CoTerm / MCP fields
+    // -------------------------------------------------------------------------
+    private val mcpEnabledCheckbox = JCheckBox("Enable MCP Server")
+    private val mcpPortSpinner     = JSpinner(SpinnerNumberModel(19999, 1024, 65535, 1))
+    private val defaultJobsSpinner = JSpinner(SpinnerNumberModel(4, 1, 128, 1))
+    private val cmdTimeoutSpinner  = JSpinner(SpinnerNumberModel(10, 1, 120, 1))
+
+    // -------------------------------------------------------------------------
     // Linter fields
     // -------------------------------------------------------------------------
     private val topFolderField    = TextFieldWithBrowseButton()
@@ -113,7 +121,11 @@ class HdlSettingsPanel(
                topFolderField.text     != (ls.topFolder ?: "")  ||
                linterTypeComboBox.selectedItem != ls.linterType  ||
                iverilogPathField.text  != ls.iverilogPath       ||
-               verilatorPathField.text != ls.verilatorPath
+               verilatorPathField.text != ls.verilatorPath      ||
+               mcpEnabledCheckbox.isSelected != vs.mcpEnabled   ||
+               (mcpPortSpinner.value as Int)    != vs.mcpPort   ||
+               (defaultJobsSpinner.value as Int) != vs.defaultJobs ||
+               (cmdTimeoutSpinner.value as Int)  != vs.cmdTimeoutMin
     }
 
     fun applyToState() {
@@ -126,11 +138,15 @@ class HdlSettingsPanel(
         val previousIverilogPath = ls.iverilogPath
         val previousVerilatorPath = ls.verilatorPath
 
-        vs.vivadoPath  = vivadoPathField.text.trim()
-        vs.vitisPath   = vitisPathField.text.trim()
-        vs.board       = boardField.text.trim()
-        vs.part        = partField.text.trim()
-        vs.ipRepoPath  = ipRepoPathField.text.trim()
+        vs.vivadoPath    = vivadoPathField.text.trim()
+        vs.vitisPath     = vitisPathField.text.trim()
+        vs.board         = boardField.text.trim()
+        vs.part          = partField.text.trim()
+        vs.ipRepoPath    = ipRepoPathField.text.trim()
+        vs.mcpEnabled    = mcpEnabledCheckbox.isSelected
+        vs.mcpPort       = mcpPortSpinner.value as Int
+        vs.defaultJobs   = defaultJobsSpinner.value as Int
+        vs.cmdTimeoutMin = cmdTimeoutSpinner.value as Int
 
         val previousTopFolder = ls.topFolder
         val newTopFolder = topFolderField.text.trim().ifEmpty { null }
@@ -162,6 +178,10 @@ class HdlSettingsPanel(
         boardField.text         = vs.board
         partField.text          = vs.part
         ipRepoPathField.text    = vs.ipRepoPath
+        mcpEnabledCheckbox.isSelected = vs.mcpEnabled
+        mcpPortSpinner.value    = vs.mcpPort
+        defaultJobsSpinner.value = vs.defaultJobs
+        cmdTimeoutSpinner.value  = vs.cmdTimeoutMin
 
         topFolderField.text     = ls.topFolder.orEmpty()
 
@@ -274,6 +294,10 @@ class HdlSettingsPanel(
         iverilogPathField.textField.document.addDocumentListener(dl)
         verilatorPathField.textField.document.addDocumentListener(dl)
         linterTypeComboBox.addItemListener { onFieldChanged() }
+        mcpEnabledCheckbox.addItemListener { onFieldChanged() }
+        mcpPortSpinner.addChangeListener    { onFieldChanged() }
+        defaultJobsSpinner.addChangeListener { onFieldChanged() }
+        cmdTimeoutSpinner.addChangeListener  { onFieldChanged() }
     }
 
     private fun onFieldChanged() {
@@ -361,6 +385,16 @@ class HdlSettingsPanel(
             .addLabeledComponent(JBLabel("Active Linter:"),   linterTypeComboBox, 1, false)
             .addLabeledComponent(JBLabel("Iverilog Path:"),   iverilogRow,        1, false)
             .addLabeledComponent(JBLabel("Verilator Path:"),  verilatorRow,       1, false)
+            .addSeparator()
+            .addComponent(TitledSeparator("Viva-CoTerm / MCP Server"))
+            .addComponent(mcpEnabledCheckbox)
+            .addLabeledComponent(JBLabel("MCP Port:"),          mcpPortSpinner,      1, false)
+            .addComponentToRightColumn(JBLabel("Configure Claude Code with: http://127.0.0.1:<port>").apply {
+                font = font.deriveFont(Font.ITALIC, 11f)
+                foreground = Color.GRAY
+            })
+            .addLabeledComponent(JBLabel("Default Build Jobs:"), defaultJobsSpinner, 1, false)
+            .addLabeledComponent(JBLabel("Cmd Timeout (min):"),  cmdTimeoutSpinner,  1, false)
 
         if (showActionButtons) {
             builder

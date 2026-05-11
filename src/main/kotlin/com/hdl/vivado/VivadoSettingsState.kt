@@ -16,7 +16,11 @@ class VivadoSettingsState : PersistentStateComponent<VivadoSettingsState.State> 
         var vitisPath: String = "/tools/Xilinx/Vitis/2023.2/bin/vitis",
         var board: String = "",
         var part: String = "xc7a35tcpg236-1",
-        var ipRepoPath: String = ""
+        var ipRepoPath: String = "",
+        var mcpPort: Int = 19999,
+        var mcpEnabled: Boolean = true,
+        var defaultJobs: Int = 4,
+        var cmdTimeoutMin: Int = 10
     )
 
     private var myState = State()
@@ -49,6 +53,30 @@ class VivadoSettingsState : PersistentStateComponent<VivadoSettingsState.State> 
         get() = myState.ipRepoPath
         set(value) {
             myState.ipRepoPath = value
+        }
+
+    var mcpPort: Int
+        get() = myState.mcpPort
+        set(value) {
+            myState.mcpPort = value
+        }
+
+    var mcpEnabled: Boolean
+        get() = myState.mcpEnabled
+        set(value) {
+            myState.mcpEnabled = value
+        }
+
+    var defaultJobs: Int
+        get() = myState.defaultJobs
+        set(value) {
+            myState.defaultJobs = value
+        }
+
+    var cmdTimeoutMin: Int
+        get() = myState.cmdTimeoutMin
+        set(value) {
+            myState.cmdTimeoutMin = value
         }
 
     override fun getState(): State = myState
