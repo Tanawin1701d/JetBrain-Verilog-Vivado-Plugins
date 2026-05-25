@@ -12,8 +12,24 @@ import com.intellij.psi.PsiFile
 class VerilogExternalAnnotator : ExternalAnnotator<PsiFile, List<LintResult>>() {
     private val LOG = Logger.getInstance(VerilogExternalAnnotator::class.java)
 
-    override fun collectInformation(file: PsiFile): PsiFile? =
-        if (file is VerilogFile) file else null
+    // Gate 1: decide whether to lint this file at all.
+    // When the user changes the top folder, LinterSettingsBroadcaster.notifyChanged()
+    // calls DaemonCodeAnalyzer.restart(), which re-invokes this method for every open
+    // file — so files outside the new top folder automatically lose their squiggles
+    // and files inside get re-linted without any manual refresh needed.
+    override fun collectInformation(file: PsiFile): PsiFile? {
+        if (file !is VerilogFile) return null
+
+        val virtualFile = file.virtualFile ?: return null
+        val settings = LinterSettingsState.getInstance(file.project)
+        val topFolder = settings.topFolder
+
+        // If no top folder is set, lint any Verilog file
+        if (topFolder == null) return file
+
+        // Only lint files that live inside the top folder
+        return if (virtualFile.path.startsWith(topFolder)) file else null
+    }
 
     override fun doAnnotate(collectedInfo: PsiFile?): List<LintResult>? {
         if (collectedInfo == null || collectedInfo !is VerilogFile) return null

@@ -81,24 +81,33 @@ class VivadoProcessManager(private val project: Project) : Disposable {
     // -------------------------------------------------------------------------
 
     private suspend fun doLaunch(xprPath: String?, initialTcl: String?) {
+        // Step 1: fetch the two services this function depends on
         val settings = VivadoSettingsState.getInstance(project)
         val bridge = TclBridgeService.getInstance(project)
 
+        // Step 2: guard — if the Vivado binary doesn't exist, fail fast and tell the user
         if (!File(settings.vivadoPath).exists()) {
             bridge.publishOutput("[VivaCo-Term] ERROR: Vivado not found at '${settings.vivadoPath}'. Configure path in HDL Settings.")
             return
         }
 
+        // Step 3: open the TCP bridge server first so the port is ready before Vivado starts
         _statusFlow.value = VivadoStatus.STARTING
         bridge.publishOutput("[VivaCo-Term] Starting Vivado...")
+        val bridgePort = bridge.startBridgeServer()  // ServerSocket on a random port; Vivado will connect back to this
 
-        val bridgePort = bridge.startBridgeServer()
-
+        // Step 4: write the auto-generated startup TCL to a temp file
+        // Vivado needs a file path via -source; it can't receive inline script text from the command line
         val startupScript = buildStartupScript(bridgePort, xprPath, initialTcl)
         val scriptFile = File.createTempFile("vivacoterm_startup_", ".tcl")
         scriptFile.writeText(startupScript)
-        scriptFile.deleteOnExit()
+        scriptFile.deleteOnExit()  // JVM deletes it when the IDE closes
 
+        // Step 5: spawn the Vivado process
+        // -mode tcl  : headless TCL mode (no GUI yet — start_gui is called inside the startup script)
+        // -source    : run the startup script immediately on boot
+        // redirectErrorStream: merge stderr into stdout so one reader handles all output
+        // DISPLAY    : required on Linux for start_gui to know which X11 display to use
         val pb = ProcessBuilder(
             settings.vivadoPath,
             "-mode", "tcl",
@@ -107,10 +116,13 @@ class VivadoProcessManager(private val project: Project) : Disposable {
         pb.redirectErrorStream(true)
         pb.environment()["DISPLAY"] = System.getenv("DISPLAY") ?: ":0"
 
+        // pb.start() is a blocking OS call — run it on the IO thread pool to avoid blocking the coroutine dispatcher
         val proc = withContext(Dispatchers.IO) { pb.start() }
         process = proc
 
-        // Stream stdout to the CoTerm output panel
+        // Step 6: coroutine that reads Vivado stdout line-by-line and forwards to the CoTerm panel
+        // Also listens for the handshake signal "VIVACOTERM_CONNECTED" which the startup script prints
+        // after successfully connecting back to our TCP bridge — that's when we flip status to RUNNING
         scope.launch {
             val reader = BufferedReader(InputStreamReader(proc.inputStream, Charsets.UTF_8))
             try {
@@ -123,10 +135,11 @@ class VivadoProcessManager(private val project: Project) : Disposable {
                         bridge.publishOutput("[VivaCo-Term] Bridge active. Type TCL commands below.")
                     }
                 }
-            } catch (_: Exception) { /* stream closed */ }
+            } catch (_: Exception) { /* stream closed when process dies — nothing to do */ }
         }
 
-        // Watch for process death
+        // Step 7: coroutine that blocks until Vivado exits, then updates status and cleans up
+        // exit code 0 = user closed Vivado normally (STOPPED), anything else = crash (CRASHED)
         scope.launch {
             withContext(Dispatchers.IO) { proc.waitFor() }
             val wasRunning = _statusFlow.value == VivadoStatus.RUNNING
