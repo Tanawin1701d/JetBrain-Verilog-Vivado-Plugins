@@ -1,5 +1,7 @@
 package com.hdl.coterm
 
+import com.hdl.mcp.McpStartAgreementDialog
+import com.hdl.mcp.McpStartChoice
 import com.hdl.mcp.VivaMcpServer
 import com.hdl.vivado.PredefinedCommandLibrary
 import com.hdl.vivado.TclBridgeService
@@ -57,7 +59,7 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
         cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
         addMouseListener(object : java.awt.event.MouseAdapter() {
             override fun mouseClicked(e: java.awt.event.MouseEvent) {
-                val url = text.removePrefix("MCP: ")
+                val url = "http://127.0.0.1:${VivadoSettingsState.getInstance(project).mcpPort}"
                 Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(url), null)
                 appendLine("[VivaCo-Term] MCP URL copied to clipboard: $url", styleInfo)
             }
@@ -83,6 +85,7 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
     private val btnLaunch  = JButton("Launch Vivado")
     private val btnRestart = JButton("Restart")
     private val btnStop    = JButton("Stop")
+    private val btnMcp     = JButton("Start MCP")
     private val btnClear   = JButton("Clear")
     private val btnCmd     = JButton("Run Command ▼")
 
@@ -91,6 +94,7 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
     init {
         wireActions()
         subscribeToFlows()
+        updateMcpLabel()
     }
 
     // -------------------------------------------------------------------------
@@ -145,6 +149,8 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
             add(btnRestart)
             add(btnStop)
             addSeparator()
+            add(btnMcp)
+            addSeparator()
             add(btnClear)
             addSeparator()
             add(btnCmd)
@@ -163,6 +169,7 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
         btnStop.addActionListener {
             VivadoProcessManager.getInstance(project).shutdownVivado()
         }
+        btnMcp.addActionListener { toggleMcpServer() }
         btnClear.addActionListener {
             try { outputDoc.remove(0, outputDoc.length) } catch (_: Exception) {}
         }
@@ -346,6 +353,43 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
         }
     }
 
+    // Start (with an agreement dialog) or stop the MCP server. Independent of Vivado status.
+    private fun toggleMcpServer() {
+        val server = VivaMcpServer.getInstance(project)
+        if (server.isRunning) {
+            server.stop()
+            appendLine("[VivaCo-Term] MCP server stopped.", styleInfo)
+        } else {
+            val dialog = McpStartAgreementDialog(project)
+            dialog.showAndGet()   // exit code is reflected in dialog.choice
+            when (dialog.choice) {
+                McpStartChoice.CANCEL -> return
+                McpStartChoice.ENABLE_RAW_TCL -> server.start(rawTclEnabled = true)
+                McpStartChoice.ENABLE_SAFE    -> server.start(rawTclEnabled = false)
+            }
+            val port = VivadoSettingsState.getInstance(project).mcpPort
+            val mode = if (server.rawTclAllowed) "raw Tcl ENABLED" else "raw Tcl disabled"
+            appendLine("[VivaCo-Term] MCP server started on http://127.0.0.1:$port ($mode).", styleInfo)
+        }
+        updateMcpLabel()
+    }
+
+    // Reflect the live MCP server state in the toolbar button and status label.
+    private fun updateMcpLabel() {
+        val server = VivaMcpServer.getInstance(project)
+        if (server.isRunning) {
+            val port = VivadoSettingsState.getInstance(project).mcpPort
+            val raw = if (server.rawTclAllowed) "ON" else "OFF"
+            mcpUrlLabel.text = "MCP: http://127.0.0.1:$port  [raw Tcl $raw]"
+            mcpUrlLabel.foreground = Color(120, 190, 120)
+            btnMcp.text = "Stop MCP"
+        } else {
+            mcpUrlLabel.text = "MCP: stopped"
+            mcpUrlLabel.foreground = Color.GRAY
+            btnMcp.text = "Start MCP"
+        }
+    }
+
     private fun updateStatus(status: VivadoStatus) {
         val (text, color) = when (status) {
             VivadoStatus.STOPPED  -> "● STOPPED"  to JBColor.RED
@@ -356,8 +400,7 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
         statusLabel.text = text
         statusLabel.foreground = color
 
-        val settings = VivadoSettingsState.getInstance(project)
-        mcpUrlLabel.text = if (settings.mcpEnabled) "MCP: http://127.0.0.1:${settings.mcpPort}" else "MCP: disabled"
+        updateMcpLabel()
 
         btnLaunch.isEnabled  = status == VivadoStatus.STOPPED || status == VivadoStatus.CRASHED
         btnRestart.isEnabled = status == VivadoStatus.RUNNING

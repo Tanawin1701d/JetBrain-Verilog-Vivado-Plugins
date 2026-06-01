@@ -18,7 +18,6 @@ class VivadoSettingsState : PersistentStateComponent<VivadoSettingsState.State> 
         var part: String = "xc7a35tcpg236-1",
         var ipRepoPath: String = "",
         var mcpPort: Int = 19999,
-        var mcpEnabled: Boolean = true,
         var defaultJobs: Int = 4,
         var cmdTimeoutMin: Int = 10
     )
@@ -59,12 +58,6 @@ class VivadoSettingsState : PersistentStateComponent<VivadoSettingsState.State> 
         get() = myState.mcpPort
         set(value) {
             myState.mcpPort = value
-        }
-
-    var mcpEnabled: Boolean
-        get() = myState.mcpEnabled
-        set(value) {
-            myState.mcpEnabled = value
         }
 
     var defaultJobs: Int

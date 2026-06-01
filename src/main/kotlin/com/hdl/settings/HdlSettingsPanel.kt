@@ -44,7 +44,6 @@ class HdlSettingsPanel(
     // -------------------------------------------------------------------------
     // Viva-CoTerm / MCP fields
     // -------------------------------------------------------------------------
-    private val mcpEnabledCheckbox = JCheckBox("Enable MCP Server")
     private val mcpPortSpinner     = JSpinner(SpinnerNumberModel(19999, 1024, 65535, 1))
     private val defaultJobsSpinner = JSpinner(SpinnerNumberModel(4, 1, 128, 1))
     private val cmdTimeoutSpinner  = JSpinner(SpinnerNumberModel(10, 1, 120, 1))
@@ -122,7 +121,6 @@ class HdlSettingsPanel(
                linterTypeComboBox.selectedItem != ls.linterType  ||
                iverilogPathField.text  != ls.iverilogPath       ||
                verilatorPathField.text != ls.verilatorPath      ||
-               mcpEnabledCheckbox.isSelected != vs.mcpEnabled   ||
                (mcpPortSpinner.value as Int)    != vs.mcpPort   ||
                (defaultJobsSpinner.value as Int) != vs.defaultJobs ||
                (cmdTimeoutSpinner.value as Int)  != vs.cmdTimeoutMin
@@ -143,7 +141,6 @@ class HdlSettingsPanel(
         vs.board         = boardField.text.trim()
         vs.part          = partField.text.trim()
         vs.ipRepoPath    = ipRepoPathField.text.trim()
-        vs.mcpEnabled    = mcpEnabledCheckbox.isSelected
         vs.mcpPort       = mcpPortSpinner.value as Int
         vs.defaultJobs   = defaultJobsSpinner.value as Int
         vs.cmdTimeoutMin = cmdTimeoutSpinner.value as Int
@@ -178,7 +175,6 @@ class HdlSettingsPanel(
         boardField.text         = vs.board
         partField.text          = vs.part
         ipRepoPathField.text    = vs.ipRepoPath
-        mcpEnabledCheckbox.isSelected = vs.mcpEnabled
         mcpPortSpinner.value    = vs.mcpPort
         defaultJobsSpinner.value = vs.defaultJobs
         cmdTimeoutSpinner.value  = vs.cmdTimeoutMin
@@ -294,7 +290,6 @@ class HdlSettingsPanel(
         iverilogPathField.textField.document.addDocumentListener(dl)
         verilatorPathField.textField.document.addDocumentListener(dl)
         linterTypeComboBox.addItemListener { onFieldChanged() }
-        mcpEnabledCheckbox.addItemListener { onFieldChanged() }
         mcpPortSpinner.addChangeListener    { onFieldChanged() }
         defaultJobsSpinner.addChangeListener { onFieldChanged() }
         cmdTimeoutSpinner.addChangeListener  { onFieldChanged() }
@@ -387,7 +382,6 @@ class HdlSettingsPanel(
             .addLabeledComponent(JBLabel("Verilator Path:"),  verilatorRow,       1, false)
             .addSeparator()
             .addComponent(TitledSeparator("Viva-CoTerm / MCP Server"))
-            .addComponent(mcpEnabledCheckbox)
             .addLabeledComponent(JBLabel("MCP Port:"),          mcpPortSpinner,      1, false)
             .addComponentToRightColumn(JBLabel("Configure Claude Code with: http://127.0.0.1:<port>").apply {
                 font = font.deriveFont(Font.ITALIC, 11f)

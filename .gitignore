@@ -51,3 +51,4 @@ bin/
 /test_files/.idea
 *viva_ip_exec
 *viva_prj_exec
+/test_files/ai

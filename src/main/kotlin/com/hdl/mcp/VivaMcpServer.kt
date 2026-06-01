@@ -24,14 +24,25 @@ class VivaMcpServer(private val project: Project) : Disposable {
 
     private var httpServer: HttpServer? = null   // null when the server is stopped
 
+    @Volatile private var rawTclEnabled = false  // whether raw-Tcl tools are permitted this session
+
+    // Tools that execute arbitrary Tcl; gated behind the per-session raw-Tcl permission.
+    private val rawTclTools = setOf("runTclRaw", "runTclScript")
+
+    // Whether the HTTP server is currently bound and serving.
+    val isRunning: Boolean get() = httpServer != null
+
+    // Whether raw-Tcl tools are permitted for the current session.
+    val rawTclAllowed: Boolean get() = rawTclEnabled
+
     // ---- Lifecycle ----
 
-    // Bind a loopback HTTP server on the configured port; no-op if MCP is disabled in settings.
-    fun start() {
+    // Bind a loopback HTTP server on the configured port. rawTclEnabled gates the
+    // arbitrary-Tcl tools (runTclRaw / runTclScript) for this session.
+    fun start(rawTclEnabled: Boolean) {
         stop()
+        this.rawTclEnabled = rawTclEnabled
         val settings = VivadoSettingsState.getInstance(project)
-        if (!settings.mcpEnabled) return
-
         val port = settings.mcpPort
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", port), 0)
         server.createContext("/") { ex -> handleRequest(ex) }   // single front door for every request
@@ -140,6 +151,14 @@ class VivaMcpServer(private val project: Project) : Disposable {
             return
         }
 
+        // Guard: arbitrary-Tcl tools require the raw-Tcl session permission.
+        if (command.id in rawTclTools && !rawTclEnabled) {
+            sendResponse(ex, 200, toolCallResult(id,
+                "Raw Tcl is disabled for this MCP session. Restart the MCP server with raw Tcl enabled to use '${command.id}'.",
+                isError = true))
+            return
+        }
+
         // Guard: refuse to run TCL unless a live Vivado session is up (checked via statusFlow).
         val manager = VivadoProcessManager.getInstance(project)
         if (manager.statusFlow.value != VivadoStatus.RUNNING) {
@@ -194,7 +213,9 @@ class VivaMcpServer(private val project: Project) : Disposable {
 
     // Render the whole command library as a JSON array of MCP tool descriptors.
     private fun buildToolsListJson(): String {
-        val tools = PredefinedCommandLibrary.commands.map { cmd ->
+        val tools = PredefinedCommandLibrary.commands
+            .filter { rawTclEnabled || it.id !in rawTclTools }   // hide gated tools when raw Tcl is off
+            .map { cmd ->
             val schema = buildInputSchema(cmd)
             McpToolDescriptor(cmd.id, cmd.description, schema)
         }
