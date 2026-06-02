@@ -68,7 +68,7 @@ class McpStartAgreementDialog(project: Project) : DialogWrapper(project, true) {
             }
         }.apply { putValue(DEFAULT_ACTION, true) }   // safest option is the default button
 
-        val rawAction = object : AbstractAction("Enable with Raw Tcl") {
+        val rawAction = object : AbstractAction("Enable with Raw Tcl (powerful)") {
             override fun actionPerformed(e: ActionEvent) {
                 choice = McpStartChoice.ENABLE_RAW_TCL
                 close(OK_EXIT_CODE)
@@ -90,16 +90,20 @@ class McpStartAgreementDialog(project: Project) : DialogWrapper(project, true) {
             your user privileges and may create, modify, or <b>delete</b> files, launch processes, or
             otherwise change your system. Keep backups and review what the assistant does.</p>
 
-            <p><b>Raw Tcl access.</b> The tools <code>runTclRaw</code> and <code>runTclScript</code> let
-            the assistant execute <b>arbitrary Tcl</b> — including unrestricted file-system and process
-            access. Enable this only if you trust the assistant and accept the risk. When disabled, these
-            two tools are blocked and hidden from the assistant; all other tools (create project, run
-            synthesis, generate bitstream, etc.) remain available.</p>
+            <p><b>Raw Tcl access <span style='color:#d9534f;'>(powerful)</span>.</b> The tools
+            <code>runTclRaw</code> and <code>runTclScript</code> let the assistant execute
+            <b>arbitrary Tcl</b> — including unrestricted file-system and process access. This is the most
+            powerful capability the server can grant: it bypasses the curated, parameter-checked tools and
+            can run <i>any</i> command Vivado (and Tcl) can. Enable this only if you trust the assistant and
+            accept the risk. When disabled, these two tools are blocked and hidden from the assistant; all
+            other tools (create project, build block design, run synthesis, generate bitstream, etc.) remain
+            available.</p>
 
             <p>Choose one:</p>
             <ul>
               <li><b>Enable (No Raw Tcl)</b> — start the server with raw-Tcl tools blocked (recommended).</li>
-              <li><b>Enable with Raw Tcl</b> — start the server and allow arbitrary Tcl execution.</li>
+              <li><b>Enable with Raw Tcl <span style='color:#d9534f;'>(powerful)</span></b> — start the
+                  server and allow arbitrary Tcl execution.</li>
               <li><b>Cancel</b> — do not start the server.</li>
             </ul>
 

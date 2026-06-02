@@ -370,8 +370,31 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
             val port = VivadoSettingsState.getInstance(project).mcpPort
             val mode = if (server.rawTclAllowed) "raw Tcl ENABLED" else "raw Tcl disabled"
             appendLine("[VivaCo-Term] MCP server started on http://127.0.0.1:$port ($mode).", styleInfo)
+
+            // The server is up, but tools cannot run until a live Vivado session exists.
+            // If Vivado isn't running yet, nudge the user to launch it now.
+            promptLaunchVivadoIfNeeded()
         }
         updateMcpLabel()
+    }
+
+    // When the MCP server has just started but Vivado is not running, warn the user that
+    // tools will fail until Vivado is up and offer to open the Launch dialog right away.
+    private fun promptLaunchVivadoIfNeeded() {
+        val status = VivadoProcessManager.getInstance(project).statusFlow.value
+        if (status == VivadoStatus.RUNNING) return
+
+        appendLine("[VivaCo-Term] Vivado is not running — MCP tools will fail until it is launched.", styleWarn)
+        val answer = Messages.showYesNoDialog(
+            project,
+            "The MCP server is started, but Vivado is not running yet.\n" +
+                "MCP tools cannot execute until a Vivado session is live.\n\n" +
+                "Launch Vivado now?",
+            "Vivado Not Running",
+            "Launch Vivado", "Later",
+            Messages.getWarningIcon()
+        )
+        if (answer == Messages.YES) showLaunchDialog()
     }
 
     // Reflect the live MCP server state in the toolbar button and status label.
