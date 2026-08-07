@@ -1,0 +1,171 @@
+#-----------------------------------------------------------
+# Vivado v2023.2 (64-bit)
+# SW Build 4029153 on Fri Oct 13 20:13:54 MDT 2023
+# IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+# SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+# Start of session at: Mon Jun  1 22:36:31 2026
+# Process ID: 207031
+# Current directory: /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai
+# Command line: vivado -mode batch -nojournal -log build_bd.log -source build_bd.tcl
+# Log file: /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/build_bd.log
+# Journal file: 
+# Running On: kathryn2, OS: Linux, CPU Frequency: 4887.372 MHz, CPU Physical cores: 10, Host memory: 16439 MB
+#-----------------------------------------------------------
+Sourcing tcl script '/home/tanawin/.Xilinx/Vivado/Vivado_init.tcl'
+source build_bd.tcl
+# set proj_name dma_ps_kv260
+# set proj_dir  [file normalize [file dirname [info script]]]
+# set part      xck26-sfvc784-2LV-c
+# set board     xilinx.com:kv260_som:part0:1.4
+# set bd_name   design_1
+# create_project $proj_name $proj_dir -part $part -force
+# set_property board_part $board [current_project]
+# create_bd_design $bd_name
+Wrote  : </media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.srcs/sources_1/bd/design_1/design_1.bd> 
+# create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e zynq_ultra_ps_e_0
+# apply_bd_automation -rule xilinx.com:bd_rule:zynq_ultra_ps_e \
+#     -config {apply_board_preset 1} [get_bd_cells zynq_ultra_ps_e_0]
+# set_property -dict [list \
+#     CONFIG.PSU__USE__M_AXI_GP0 {1} \
+#     CONFIG.PSU__USE__M_AXI_GP1 {0} \
+#     CONFIG.PSU__USE__S_AXI_GP2 {1} \
+#     CONFIG.PSU__USE__IRQ0 {1} \
+#     CONFIG.PSU__FPGA_PL0_ENABLE {1} \
+#     CONFIG.PSU__NUM_FABRIC_RESETS {1} \
+#     CONFIG.PSU__CRL_APB__PL0_REF_CTRL__FREQMHZ {100} \
+# ] [get_bd_cells zynq_ultra_ps_e_0]
+# create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dma axi_dma_0
+# set_property -dict [list \
+#     CONFIG.c_include_sg {0} \
+#     CONFIG.c_sg_include_stscntrl_strm {0} \
+#     CONFIG.c_include_mm2s {1} \
+#     CONFIG.c_include_s2mm {1} \
+# ] [get_bd_cells axi_dma_0]
+# create_bd_cell -type ip -vlnv xilinx.com:ip:axis_data_fifo axis_data_fifo_0
+# set_property -dict [list \
+#     CONFIG.TDATA_NUM_BYTES {4} \
+#     CONFIG.FIFO_DEPTH {512} \
+# ] [get_bd_cells axis_data_fifo_0]
+# create_bd_cell -type ip -vlnv xilinx.com:ip:xlconcat xlconcat_0
+# set_property CONFIG.NUM_PORTS {2} [get_bd_cells xlconcat_0]
+# create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect axi_smc_ctrl
+# set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {1}] [get_bd_cells axi_smc_ctrl]
+# create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect axi_smc_data
+# set_property -dict [list CONFIG.NUM_SI {2} CONFIG.NUM_MI {1}] [get_bd_cells axi_smc_data]
+# create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset rst_ps_0
+INFO: [Ipptcl 7-1463] No Compatible Board Interface found. Board Tab not created in customize GUI
+# connect_bd_intf_net [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_FPD] [get_bd_intf_pins axi_smc_ctrl/S00_AXI]
+# connect_bd_intf_net [get_bd_intf_pins axi_smc_ctrl/M00_AXI]            [get_bd_intf_pins axi_dma_0/S_AXI_LITE]
+# connect_bd_intf_net [get_bd_intf_pins axi_dma_0/M_AXI_MM2S] [get_bd_intf_pins axi_smc_data/S00_AXI]
+# connect_bd_intf_net [get_bd_intf_pins axi_dma_0/M_AXI_S2MM] [get_bd_intf_pins axi_smc_data/S01_AXI]
+# connect_bd_intf_net [get_bd_intf_pins axi_smc_data/M00_AXI] [get_bd_intf_pins zynq_ultra_ps_e_0/S_AXI_HP0_FPD]
+# connect_bd_intf_net [get_bd_intf_pins axi_dma_0/M_AXIS_MM2S] [get_bd_intf_pins axis_data_fifo_0/S_AXIS]
+# connect_bd_intf_net [get_bd_intf_pins axis_data_fifo_0/M_AXIS] [get_bd_intf_pins axi_dma_0/S_AXIS_S2MM]
+# connect_bd_net [get_bd_pins axi_dma_0/mm2s_introut] [get_bd_pins xlconcat_0/In0]
+# connect_bd_net [get_bd_pins axi_dma_0/s2mm_introut] [get_bd_pins xlconcat_0/In1]
+# connect_bd_net [get_bd_pins xlconcat_0/dout]        [get_bd_pins zynq_ultra_ps_e_0/pl_ps_irq0]
+# set clk [get_bd_pins zynq_ultra_ps_e_0/pl_clk0]
+# foreach p {
+#     zynq_ultra_ps_e_0/maxihpm0_fpd_aclk
+#     zynq_ultra_ps_e_0/saxihp0_fpd_aclk
+#     axi_dma_0/s_axi_lite_aclk
+#     axi_dma_0/m_axi_mm2s_aclk
+#     axi_dma_0/m_axi_s2mm_aclk
+#     axi_smc_ctrl/aclk
+#     axi_smc_data/aclk
+#     axis_data_fifo_0/s_axis_aclk
+#     rst_ps_0/slowest_sync_clk
+# } { connect_bd_net $clk [get_bd_pins $p] }
+# connect_bd_net [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] [get_bd_pins rst_ps_0/ext_reset_in]
+# set rstn [get_bd_pins rst_ps_0/peripheral_aresetn]
+# foreach p {
+#     axi_dma_0/axi_resetn
+#     axi_smc_ctrl/aresetn
+#     axi_smc_data/aresetn
+#     axis_data_fifo_0/s_axis_aresetn
+# } { connect_bd_net $rstn [get_bd_pins $p] }
+# regenerate_bd_layout
+# assign_bd_address
+WARNING: [BD 41-1743] Cannot assign slave segment '/zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH' into address space '/axi_dma_0/Data_MM2S' because no valid addressing path exists. The addressing path from slave segment '/zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH' to address space '/axi_dma_0/Data_MM2S' terminates at master interface '/axi_dma_0/M_AXI_MM2S'. The apertures for this interface {<0x0_0000_0000 [ 4G ]>} do not intersect with previous path apertures {<0x8_0000_0000 [ 32G ]>}. This assignment will be automatically excluded.
+WARNING: [BD 41-1743] Cannot assign slave segment '/zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH' into address space '/axi_dma_0/Data_S2MM' because no valid addressing path exists. The addressing path from slave segment '/zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH' to address space '/axi_dma_0/Data_S2MM' terminates at master interface '/axi_dma_0/M_AXI_S2MM'. The apertures for this interface {<0x0_0000_0000 [ 4G ]>} do not intersect with previous path apertures {<0x8_0000_0000 [ 32G ]>}. This assignment will be automatically excluded.
+Slave segment '/zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_LOW' is being assigned into address space '/axi_dma_0/Data_MM2S' at <0x0000_0000 [ 2G ]>.
+Slave segment '/zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_LOW' is being assigned into address space '/axi_dma_0/Data_S2MM' at <0x0000_0000 [ 2G ]>.
+Slave segment '/zynq_ultra_ps_e_0/SAXIGP2/HP0_QSPI' is being assigned into address space '/axi_dma_0/Data_MM2S' at <0xC000_0000 [ 512M ]>.
+Slave segment '/zynq_ultra_ps_e_0/SAXIGP2/HP0_QSPI' is being assigned into address space '/axi_dma_0/Data_S2MM' at <0xC000_0000 [ 512M ]>.
+Slave segment '/axi_dma_0/S_AXI_LITE/Reg' is being assigned into address space '/zynq_ultra_ps_e_0/Data' at <0xA000_0000 [ 64K ]>.
+Slave segment '/zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM' is being assigned into address space '/axi_dma_0/Data_MM2S' at <0xFF00_0000 [ 16M ]>.
+WARNING: [BD 41-1051] Slave segment '/zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM' with 'register' usage does not match address space '/axi_dma_0/Data_MM2S' with 'memory' usage so will be excluded from this address space. Please use the 'include_bd_addr_seg' command to override this precaution if required.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_MM2S.
+Slave segment '/zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM' is being assigned into address space '/axi_dma_0/Data_S2MM' at <0xFF00_0000 [ 16M ]>.
+WARNING: [BD 41-1051] Slave segment '/zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM' with 'register' usage does not match address space '/axi_dma_0/Data_S2MM' with 'memory' usage so will be excluded from this address space. Please use the 'include_bd_addr_seg' command to override this precaution if required.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_MM2S.
+# save_bd_design
+Wrote  : </media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.srcs/sources_1/bd/design_1/design_1.bd> 
+# validate_bd_design
+WARNING: [BD 41-1629] Slave segment </zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM> is excluded from all addressing paths.
+WARNING: [BD 41-1629] Slave segment </zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH> is excluded from all addressing paths.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_S2MM.
+INFO: [BD 5-943] Reserving offset range <0xA000_0000 [ 64K ]> from slave interface '/axi_smc_ctrl/S00_AXI' to master interface '/axi_smc_ctrl/M00_AXI'. This will be used by smartconnect on path for routing.
+INFO: [xilinx.com:ip:smartconnect:1.0-1] design_1_axi_smc_ctrl_0: SmartConnect design_1_axi_smc_ctrl_0 is in Low-Area Mode.
+WARNING: [xilinx.com:ip:smartconnect:1.0-1] design_1_axi_smc_ctrl_0: IP design_1_axi_smc_ctrl_0 is configured in Low-area mode as all propagated traffic is low-bandwidth (AXI4LITE). SI S00_AXI has property HAS_BURST == 1. WRAP bursts are not supported in Low-area mode and will result in DECERR if received.
+WARNING: [xilinx.com:ip:smartconnect:1.0-1] design_1_axi_smc_ctrl_0: If WRAP transactions are required then turn off Low-area mode using ADVANCED_PROPERTIES. Execute following: set_property CONFIG.ADVANCED_PROPERTIES {__experimental_features__ {disable_low_area_mode 1}} [get_bd_cells /design_1_axi_smc_ctrl_0]
+INFO: [Ipptcl 7-1463] No Compatible Board Interface found. Board Tab not created in customize GUI
+INFO: [BD 5-943] Reserving offset range <0x0000_0000 [ 2G ]> from slave interface '/axi_smc_data/S00_AXI' to master interface '/axi_smc_data/M00_AXI'. This will be used by smartconnect on path for routing.
+INFO: [BD 5-943] Reserving offset range <0xC000_0000 [ 512M ]> from slave interface '/axi_smc_data/S00_AXI' to master interface '/axi_smc_data/M00_AXI'. This will be used by smartconnect on path for routing.
+INFO: [BD 5-943] Reserving offset range <0x0000_0000 [ 2G ]> from slave interface '/axi_smc_data/S01_AXI' to master interface '/axi_smc_data/M00_AXI'. This will be used by smartconnect on path for routing.
+INFO: [BD 5-943] Reserving offset range <0xC000_0000 [ 512M ]> from slave interface '/axi_smc_data/S01_AXI' to master interface '/axi_smc_data/M00_AXI'. This will be used by smartconnect on path for routing.
+INFO: [xilinx.com:ip:smartconnect:1.0-1] design_1_axi_smc_data_0: SmartConnect design_1_axi_smc_data_0 is in High-performance Mode.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_S2MM.
+WARNING: [BD 41-237] Bus Interface property AWUSER_WIDTH does not match between /zynq_ultra_ps_e_0/S_AXI_HP0_FPD(1) and /axi_smc_data/M00_AXI(0)
+WARNING: [BD 41-237] Bus Interface property ARUSER_WIDTH does not match between /zynq_ultra_ps_e_0/S_AXI_HP0_FPD(1) and /axi_smc_data/M00_AXI(0)
+# make_wrapper -files [get_files ${bd_name}.bd] -top -import
+INFO: [BD 41-1662] The design 'design_1.bd' is already validated. Therefore parameter propagation will not be re-run.
+Wrote  : </media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.srcs/sources_1/bd/design_1/design_1.bd> 
+Verilog Output written to : /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.gen/sources_1/bd/design_1/synth/design_1.v
+Verilog Output written to : /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.gen/sources_1/bd/design_1/sim/design_1.v
+Verilog Output written to : /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.gen/sources_1/bd/design_1/hdl/design_1_wrapper.v
+# set_property top ${bd_name}_wrapper [current_fileset]
+# update_compile_order -fileset sources_1
+# puts "==== BD_BUILD_DONE top=[get_property top [current_fileset]] ===="
+==== BD_BUILD_DONE top=design_1_wrapper ====
+INFO: [Common 17-206] Exiting Vivado at Mon Jun  1 22:36:50 2026...

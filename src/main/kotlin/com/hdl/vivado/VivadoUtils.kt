@@ -95,21 +95,39 @@ object VivadoUtils {
         return script.toString()
     }
 
+    /** Which one-shot launcher a working directory belongs to. */
+    enum class ExecDirKind(val dirName: String) {
+        PROJECT("viva_prj_exec"),
+        IP("viva_ip_exec")
+    }
+
+    /**
+     * Working directory for a one-shot Vivado launch, scoped by source folder.
+     *
+     * The extra [sourceFolderName] level matters: without it every folder under
+     * the same parent shares one exec directory, so building project B silently
+     * destroys the Vivado project belonging to project A.
+     */
+    fun execWorkingDir(parentPath: String, sourceFolderName: String, kind: ExecDirKind): String =
+        File(File(parentPath, kind.dirName), sourceFolderName).path
+
+    /**
+     * Launch Vivado in [workingDirectory].
+     *
+     * Never deletes anything. Callers that need a clean directory must call
+     * FileUtils.prepareCleanWorkingDir first, which asks the user before wiping
+     * a previous run.
+     */
     fun launchVivado(
         vivadoPath: String,
         workingDirectory: String,
         tclScript: String? = null,
         tclFilePath: String? = null,
-        mode: String = "gui",
-        deleteIfExists: Boolean = false
+        mode: String = "gui"
     ): Process {
 
         val dir = File(workingDirectory)
 
-        //// delete if exists
-        if (dir.exists() && deleteIfExists){
-            dir.deleteRecursively()
-        }
         //// create if not exists
         if (!dir.exists() && !dir.mkdirs()) {
             throw IOException("Failed to create working directory: $workingDirectory")

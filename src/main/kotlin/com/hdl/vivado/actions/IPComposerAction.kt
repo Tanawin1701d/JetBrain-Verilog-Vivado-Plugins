@@ -1,5 +1,6 @@
 package com.hdl.vivado.actions
 
+import com.hdl.vivado.FileUtils
 import com.hdl.vivado.VivadoSettingsState
 import com.hdl.vivado.VivadoUtils
 import com.intellij.notification.NotificationGroupManager
@@ -56,7 +57,12 @@ class IPComposerAction : AnAction("IP Composer") {
                 return
             }
 
-            val vivadoExecDirPath = "${virtualFile.parent.path}/viva_ip_exec"
+            // Scoped by source folder name: two folders sharing a parent must not
+            // share an exec directory, or composing one wipes the other's project.
+            val parentPath = virtualFile.parent?.path ?: virtualFile.path
+            val vivadoExecDirPath = VivadoUtils.execWorkingDir(
+                parentPath, virtualFile.name, VivadoUtils.ExecDirKind.IP
+            )
             val ipRepoDirPath = ipRepoPath
 
             val createAndAddFileCmd = VivadoUtils.genTclCreatePrjAndAddFilesCommand(
@@ -78,12 +84,16 @@ class IPComposerAction : AnAction("IP Composer") {
                 throw IOException("Failed to create working directory: $repoDir")
             }
 
+            // Asks before deleting a previous run; abort if the user says no.
+            if (!FileUtils.prepareCleanWorkingDir(File(vivadoExecDirPath), project, "IP Composer workspace")) {
+                return
+            }
+
             VivadoUtils.launchVivado(
                 settings.vivadoPath,
                 vivadoExecDirPath,
                 tclScript,
-                mode = "gui",
-                deleteIfExists = true
+                mode = "gui"
             )
 
             NotificationGroupManager.getInstance()

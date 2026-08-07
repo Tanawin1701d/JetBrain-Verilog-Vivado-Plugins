@@ -1,5 +1,6 @@
 package com.hdl.vivado.actions
 
+import com.hdl.vivado.FileUtils
 import com.hdl.vivado.VivadoSettingsState
 import com.hdl.vivado.VivadoUtils
 import com.intellij.notification.NotificationGroupManager
@@ -55,7 +56,18 @@ class BuildProjectAction : AnAction("Build Project") {
         try {
 
             val prjFolderName = virtualFile.name + "_prj"
-            val vivadoExecDirPath = "${virtualFile.parent.path}/viva_prj_exec"
+
+            // Scoped by source folder name: two folders sharing a parent must not
+            // share an exec directory, or building one wipes the other's project.
+            val parentPath = virtualFile.parent?.path ?: virtualFile.path
+            val vivadoExecDirPath = VivadoUtils.execWorkingDir(
+                parentPath, virtualFile.name, VivadoUtils.ExecDirKind.PROJECT
+            )
+
+            // Asks before deleting a previous run; abort if the user says no.
+            if (!FileUtils.prepareCleanWorkingDir(File(vivadoExecDirPath), project, "Vivado project")) {
+                return
+            }
 
             val createAndAddFileCmd = VivadoUtils.genTclCreatePrjAndAddFilesCommand(
                 prjFolderName, prjFolderName,
@@ -71,8 +83,7 @@ class BuildProjectAction : AnAction("Build Project") {
                 settings.vivadoPath,
                 vivadoExecDirPath,
                 tclScript,
-                mode = "gui",
-                deleteIfExists = true
+                mode = "gui"
             )
 
             NotificationGroupManager.getInstance()

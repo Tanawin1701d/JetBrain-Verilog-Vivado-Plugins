@@ -1,0 +1,4 @@
+PROJ=dma_ps_kv260
+SYNTH=synth_design Complete! PROG=100%
+IMPL=Running Design Initialization... PROG=0%
+TOP=design_1_wrapper

@@ -1,0 +1,101 @@
+#-----------------------------------------------------------
+# Vivado v2023.2 (64-bit)
+# SW Build 4029153 on Fri Oct 13 20:13:54 MDT 2023
+# IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+# SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+# Start of session at: Mon Jun  1 22:37:52 2026
+# Process ID: 207286
+# Current directory: /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai
+# Command line: vivado -mode batch -nojournal -log run_impl.log -source run_impl.tcl
+# Log file: /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/run_impl.log
+# Journal file: 
+# Running On: kathryn2, OS: Linux, CPU Frequency: 4745.269 MHz, CPU Physical cores: 10, Host memory: 16439 MB
+#-----------------------------------------------------------
+Sourcing tcl script '/home/tanawin/.Xilinx/Vivado/Vivado_init.tcl'
+source run_impl.tcl
+# set proj_dir [file normalize [file dirname [info script]]]
+# open_project $proj_dir/dma_ps_kv260.xpr
+Scanning sources...
+Finished scanning sources
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/tools/Xilinx/Vivado/2023.2/data/ip'.
+open_project: Time (s): cpu = 00:00:05 ; elapsed = 00:00:05 . Memory (MB): peak = 1402.375 ; gain = 85.375 ; free physical = 186 ; free virtual = 59919
+# update_compile_order -fileset sources_1
+# launch_runs impl_1 -to_step write_bitstream -jobs 8
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_MM2S.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_DDR_HIGH from address space /axi_dma_0/Data_S2MM.
+Excluding slave segment /zynq_ultra_ps_e_0/SAXIGP2/HP0_LPS_OCM from address space /axi_dma_0/Data_S2MM.
+INFO: [BD 41-1662] The design 'design_1.bd' is already validated. Therefore parameter propagation will not be re-run.
+Verilog Output written to : /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.gen/sources_1/bd/design_1/synth/design_1.v
+Verilog Output written to : /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.gen/sources_1/bd/design_1/sim/design_1.v
+Verilog Output written to : /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.gen/sources_1/bd/design_1/hdl/design_1_wrapper.v
+INFO: [xilinx.com:ip:zynq_ultra_ps_e:3.5-0] design_1_zynq_ultra_ps_e_0_0: 
+Changes in your design (including the PCW configuration settings) are not automatically exported from Vivado to Xilinx's SDK, Petalinux or Yocto.
+This is by design to avoid disrupting existing embedded development efforts. To have any changes of your design taking effect in the embedded software flow please export your
+design by going through Vivado's main menu, click on File, then Export finally select Export Hardware, please ensure you click on the Include BitStream option.
+The auto-generated HDF file is all you need to import in Xilinx's SDK, Petalinux or Yocto for your changes to be reflected in the Embedded Software Flow.
+For more information, please consult PG201, section: Exporting PCW Settings to Embedded Software Flows
+INFO: [PSU-0] Address Range of DDR (0x7ff00000 to 0x7fffffff) is reserved by PMU for internal purpose.
+INFO: [IP_Flow 19-5611] Unable to find an associated reset port for the interface 'M_AXI_HPM0_FPD'. A default connection has been created.
+INFO: [IP_Flow 19-5611] Unable to find an associated reset port for the interface 'S_AXI_HP0_FPD'. A default connection has been created.
+INFO: [BD 41-1029] Generation completed for the IP Integrator block zynq_ultra_ps_e_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block axi_dma_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block axis_data_fifo_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block xlconcat_0 .
+Exporting to file /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.gen/sources_1/bd/design_1/ip/design_1_axi_smc_ctrl_0/bd_0/hw_handoff/design_1_axi_smc_ctrl_0.hwh
+Generated Hardware Definition File /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.gen/sources_1/bd/design_1/ip/design_1_axi_smc_ctrl_0/bd_0/synth/design_1_axi_smc_ctrl_0.hwdef
+INFO: [BD 41-1029] Generation completed for the IP Integrator block axi_smc_ctrl .
+Exporting to file /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.gen/sources_1/bd/design_1/ip/design_1_axi_smc_data_0/bd_0/hw_handoff/design_1_axi_smc_data_0.hwh
+Generated Hardware Definition File /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.gen/sources_1/bd/design_1/ip/design_1_axi_smc_data_0/bd_0/synth/design_1_axi_smc_data_0.hwdef
+INFO: [BD 41-1029] Generation completed for the IP Integrator block axi_smc_data .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block rst_ps_0 .
+Exporting to file /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.gen/sources_1/bd/design_1/hw_handoff/design_1.hwh
+Generated Hardware Definition File /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.gen/sources_1/bd/design_1/synth/design_1.hwdef
+INFO: [IP_Flow 19-6930] IPCACHE: runCacheChecks() number of threads = 8
+INFO: [IP_Flow 19-6921] IPCACHE: Adding cache check func to thread queue for IP design_1_axi_dma_0_0
+INFO: [IP_Flow 19-6921] IPCACHE: Adding cache check func to thread queue for IP design_1_axi_smc_ctrl_0
+INFO: [IP_Flow 19-6921] IPCACHE: Adding cache check func to thread queue for IP design_1_axi_smc_data_0
+INFO: [IP_Flow 19-6921] IPCACHE: Adding cache check func to thread queue for IP design_1_axis_data_fifo_0_0
+INFO: [IP_Flow 19-6921] IPCACHE: Adding cache check func to thread queue for IP design_1_rst_ps_0_0
+INFO: [IP_Flow 19-6921] IPCACHE: Adding cache check func to thread queue for IP design_1_zynq_ultra_ps_e_0_0
+INFO: [IP_Flow 19-8020] IPCACHE: runCacheChecks() calling threadPool finishWork()
+INFO: [IP_Flow 19-6924] IPCACHE: Running cache check for IP inst: design_1_axi_dma_0_0
+INFO: [IP_Flow 19-6924] IPCACHE: Running cache check for IP inst: design_1_axi_smc_ctrl_0
+INFO: [IP_Flow 19-6924] IPCACHE: Running cache check for IP inst: design_1_axi_smc_data_0
+INFO: [IP_Flow 19-6924] IPCACHE: Running cache check for IP inst: design_1_axis_data_fifo_0_0
+INFO: [IP_Flow 19-6924] IPCACHE: Running cache check for IP inst: design_1_rst_ps_0_0
+INFO: [IP_Flow 19-6924] IPCACHE: Running cache check for IP inst: design_1_zynq_ultra_ps_e_0_0
+[Mon Jun  1 22:38:35 2026] Launched design_1_axis_data_fifo_0_0_synth_1, design_1_axi_smc_ctrl_0_synth_1, design_1_axi_smc_data_0_synth_1, design_1_rst_ps_0_0_synth_1, design_1_axi_dma_0_0_synth_1, design_1_zynq_ultra_ps_e_0_0_synth_1, synth_1...
+Run output will be captured here:
+design_1_axis_data_fifo_0_0_synth_1: /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.runs/design_1_axis_data_fifo_0_0_synth_1/runme.log
+design_1_axi_smc_ctrl_0_synth_1: /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.runs/design_1_axi_smc_ctrl_0_synth_1/runme.log
+design_1_axi_smc_data_0_synth_1: /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.runs/design_1_axi_smc_data_0_synth_1/runme.log
+design_1_rst_ps_0_0_synth_1: /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.runs/design_1_rst_ps_0_0_synth_1/runme.log
+design_1_axi_dma_0_0_synth_1: /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.runs/design_1_axi_dma_0_0_synth_1/runme.log
+design_1_zynq_ultra_ps_e_0_0_synth_1: /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.runs/design_1_zynq_ultra_ps_e_0_0_synth_1/runme.log
+synth_1: /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.runs/synth_1/runme.log
+[Mon Jun  1 22:38:35 2026] Launched impl_1...
+Run output will be captured here: /media/tanawin/tanawin1701e/project8/jetbrain_hdl_vivado_plug_in/jetbrain_hdl_vivado_plug_in/test_files/ai/dma_ps_kv260.runs/impl_1/runme.log
+launch_runs: Time (s): cpu = 00:00:26 ; elapsed = 00:00:35 . Memory (MB): peak = 2102.027 ; gain = 601.965 ; free physical = 178 ; free virtual = 59260
+# wait_on_run impl_1
+[Mon Jun  1 22:38:35 2026] Waiting for impl_1 to finish...
+
+*** Running vivado
+    with args -log design_1_wrapper.vdi -applog -m64 -product Vivado -messageDb vivado.pb -mode batch -source design_1_wrapper.tcl -notrace
+
+
+****** Vivado v2023.2 (64-bit)
+  **** SW Build 4029153 on Fri Oct 13 20:13:54 MDT 2023
+  **** IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+  **** SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+
+Sourcing tcl script '/home/tanawin/.Xilinx/Vivado/Vivado_init.tcl'
+source design_1_wrapper.tcl -notrace
+create_project: Time (s): cpu = 00:00:05 ; elapsed = 00:00:05 . Memory (MB): peak = 1358.254 ; gain = 0.023 ; free physical = 9708 ; free virtual = 70834
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/tools/Xilinx/Vivado/2023.2/data/ip'.

@@ -1,6 +1,5 @@
 package com.hdl.mcp
 
-import com.hdl.vivado.PredefinedCommand
 import com.hdl.vivado.PredefinedCommandLibrary
 import com.hdl.vivado.TclBridgeService
 import com.hdl.vivado.VivadoProcessManager
@@ -27,7 +26,8 @@ class VivaMcpServer(private val project: Project) : Disposable {
     @Volatile private var rawTclEnabled = false  // whether raw-Tcl tools are permitted this session
 
     // Tools that execute arbitrary Tcl; gated behind the per-session raw-Tcl permission.
-    private val rawTclTools = setOf("runTclRaw", "runTclScript")
+    // Defined in the library so a command rename cannot silently disarm the gate.
+    private val rawTclTools = PredefinedCommandLibrary.rawTclToolIds
 
     // Whether the HTTP server is currently bound and serving.
     val isRunning: Boolean get() = httpServer != null
@@ -89,8 +89,8 @@ class VivaMcpServer(private val project: Project) : Disposable {
             val body = ex.requestBody.bufferedReader(Charsets.UTF_8).readText()
 
             // Parse minimal JSON-RPC fields — "method" selects the operation, "id" is echoed back.
-            val method = extractStringField(body, "method")
-            val idRaw = extractField(body, "id")
+            val method = McpJson.stringField(body, "method")
+            val idRaw = McpJson.scalarField(body, "id")
             val id = idRaw?.trim()
 
             // Dispatch on the JSON-RPC method string carried in the body (not the HTTP verb).
@@ -134,13 +134,13 @@ class VivaMcpServer(private val project: Project) : Disposable {
     // Each guard returns early with a JSON-RPC/tool error rather than throwing.
     private fun handleToolCall(ex: HttpExchange, body: String, id: String?) {
         // Guard: request must carry a params object.
-        val params = extractObjectField(body, "params") ?: run {
+        val params = McpJson.objectField(body, "params") ?: run {
             sendResponse(ex, 200, errorResponse(id, -32602, "Missing params"))
             return
         }
 
         // Guard: params must name a tool.
-        val toolName = extractStringField(params, "name") ?: run {
+        val toolName = McpJson.stringField(params, "name") ?: run {
             sendResponse(ex, 200, errorResponse(id, -32602, "Missing tool name"))
             return
         }
@@ -168,8 +168,8 @@ class VivaMcpServer(private val project: Project) : Disposable {
             return
         }
 
-        val argsJson = extractObjectField(params, "arguments") ?: "{}"   // absent arguments → empty object
-        val args = parseJsonObject(argsJson).toMutableMap<String, Any>()  // mutable so defaults can be injected
+        val argsJson = McpJson.objectField(params, "arguments") ?: "{}"   // absent arguments → empty object
+        val args = McpJson.flatObject(argsJson).toMutableMap<String, Any>()  // mutable so defaults can be injected
 
         // Validate required parameters
         for (param in command.parameters.filter { it.required }) {
@@ -211,122 +211,31 @@ class VivaMcpServer(private val project: Project) : Disposable {
 
     // ---- MCP tool/schema serialization ----
 
-    // Render the whole command library as a JSON array of MCP tool descriptors.
-    private fun buildToolsListJson(): String {
-        val tools = PredefinedCommandLibrary.commands
-            .filter { rawTclEnabled || it.id !in rawTclTools }   // hide gated tools when raw Tcl is off
-            .map { cmd ->
-            val schema = buildInputSchema(cmd)
-            McpToolDescriptor(cmd.id, cmd.description, schema)
-        }
-        return "[" + tools.joinToString(",") { t ->
-            """{"name":${jsonStr(t.name)},"description":${jsonStr(t.description)},"inputSchema":${t.inputSchema}}"""
-        } + "]"
-    }
-
-    // Build a JSON-Schema "object" describing one command's parameters (types + required list).
-    private fun buildInputSchema(cmd: PredefinedCommand): String {
-        if (cmd.parameters.isEmpty()) {
-            return """{"type":"object","properties":{},"required":[]}"""
-        }
-        // Map each internal ParameterType to its JSON-Schema type keyword.
-        val props = cmd.parameters.joinToString(",") { p ->
-            val typeStr = when (p.type) {
-                com.hdl.vivado.ParameterType.INT -> "integer"
-                com.hdl.vivado.ParameterType.BOOLEAN -> "boolean"
-                else -> "string"
-            }
-            """${jsonStr(p.name)}:{"type":"$typeStr","description":${jsonStr(p.description)}}"""
-        }
-        val required = cmd.parameters.filter { it.required }.joinToString(",") { jsonStr(it.name) }
-        return """{"type":"object","properties":{$props},"required":[$required]}"""
-    }
+    // Render the visible part of the command library as MCP tool descriptors.
+    // Gating decided here (it is a permission question); rendering lives in McpSchema.
+    private fun buildToolsListJson(): String =
+        McpSchema.toolsList(
+            PredefinedCommandLibrary.commands
+                .filter { rawTclEnabled || it.id !in rawTclTools }   // hide gated tools when raw Tcl is off
+        )
 
     // ---- Response envelope helpers ----
 
     // Wrap tool output as an MCP "result" with a single text content block; isError flags failures.
     private fun toolCallResult(id: String?, text: String, isError: Boolean): String {
-        val content = """[{"type":"text","text":${jsonStr(text.trim())}}]"""
+        val content = """[{"type":"text","text":${McpJson.quote(text.trim())}}]"""
         return """{"jsonrpc":"2.0","id":$id,"result":{"content":$content,"isError":$isError}}"""
     }
 
     // Build a JSON-RPC error envelope (protocol-level failures, not tool failures).
     private fun errorResponse(id: String?, code: Int, msg: String): String =
-        """{"jsonrpc":"2.0","id":${id ?: "null"},"error":{"code":$code,"message":${jsonStr(msg)}}}"""
+        """{"jsonrpc":"2.0","id":${id ?: "null"},"error":{"code":$code,"message":${McpJson.quote(msg)}}}"""
 
     // Write status + UTF-8 body and close the exchange (use{} guarantees the stream is closed).
     private fun sendResponse(ex: HttpExchange, status: Int, body: String) {
         val bytes = body.toByteArray(Charsets.UTF_8)
         ex.sendResponseHeaders(status, bytes.size.toLong())
         ex.responseBody.use { it.write(bytes) }
-    }
-
-    // -------------------------------------------------------------------------
-    // Minimal JSON helpers (no external library needed for these simple structures)
-    // -------------------------------------------------------------------------
-
-    // Quote + escape a string so it is safe to splice into the hand-built JSON above.
-    private fun jsonStr(s: String): String {
-        val escaped = s
-            .replace("\\", "\\\\")   // backslash first, so later escapes aren't double-escaped
-            .replace("\"", "\\\"")
-            .replace("\n", "\\n")
-            .replace("\r", "\\r")
-            .replace("\t", "\\t")
-        return "\"$escaped\""
-    }
-
-    // Pull a string-valued field out of raw JSON, unescaping the captured contents.
-    private fun extractStringField(json: String, field: String): String? {
-        val pattern = Regex(""""$field"\s*:\s*"((?:[^"\\]|\\.)*)"""")   // captures escaped string body
-        return pattern.find(json)?.groupValues?.get(1)
-            ?.replace("\\\"", "\"")
-            ?.replace("\\n", "\n")
-            ?.replace("\\\\", "\\")
-    }
-
-    // Pull a non-string scalar field (number/bool/raw) up to the next delimiter.
-    private fun extractField(json: String, field: String): String? {
-        val pattern = Regex(""""$field"\s*:\s*([^,}\]]+)""")   // stop at , } or ]
-        return pattern.find(json)?.groupValues?.get(1)?.trim()
-    }
-
-    // Extract a nested object value by scanning brace depth (regex can't balance braces).
-    private fun extractObjectField(json: String, field: String): String? {
-        val idx = json.indexOf("\"$field\"")
-        if (idx < 0) return null
-        val objStart = json.indexOf('{', idx)   // first '{' after the key
-        if (objStart < 0) return null
-        var depth = 0
-        var i = objStart
-        while (i < json.length) {
-            when (json[i]) {
-                '{' -> depth++
-                '}' -> { depth--; if (depth == 0) return json.substring(objStart, i + 1) }   // matching close
-            }
-            i++
-        }
-        return null
-    }
-
-    /** Parse a flat JSON object with string/number values into a String→String map. */
-    private fun parseJsonObject(json: String): Map<String, String> {
-        val result = mutableMapOf<String, String>()
-        // One regex matching "key": followed by a string, number, or true/false/null literal.
-        val kvPattern = Regex(""""([^"]+)"\s*:\s*(?:"((?:[^"\\]|\\.)*)"|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|true|false|null)""")
-        for (match in kvPattern.findAll(json)) {
-            val key = match.groupValues[1]      // group 1: the key
-            val strVal = match.groupValues[2]   // group 2: string body (empty if not a string)
-            val numVal = match.groupValues[3]   // group 3: numeric literal (empty if not a number)
-            val raw = match.value.substringAfter(':').trim()   // fallback: everything after the colon
-            // Prefer the string capture, then the number capture, else the de-quoted raw value.
-            result[key] = when {
-                strVal.isNotEmpty() || raw.startsWith("\"") -> strVal.replace("\\\"", "\"").replace("\\n", "\n")
-                numVal.isNotEmpty() -> numVal
-                else -> raw.trim('"')
-            }
-        }
-        return result
     }
 
     // Service teardown hook: stop the HTTP server when the project closes.

@@ -1,87 +1,169 @@
 # HDL Plugin — Test Files
 
-This directory contains sample files for manually testing every feature of the plugin.
+Fixtures for manually testing the parts of the plugin that need a real IDE, a
+real linter, or a real Vivado.
+
+**Automated tests live elsewhere.** Run them first — they are fast and need
+none of the above:
+
+```bash
+./gradlew test
+```
+
+They cover the MCP JSON layer, the tool-schema projection, all 27 predefined
+commands, and Verilog tokenisation. Anything they can catch is not repeated
+here.
 
 ---
 
-## Directory Layout
+## Layout
 
 ```
 test_files/
-├── linter_test/
-│   ├── top_module/          # Clean multi-file design (zero linter errors)
-│   │   ├── top.v            # Top-level module  ← set as Top File
-│   │   ├── counter.v        # Sub-module
-│   │   └── adder.v          # Sub-module
-│   └── errors/              # Files with intentional errors
-│       ├── syntax_error.v   # Parse/syntax error (line ~14)
-│       ├── undeclared_wire.v# Undeclared identifier
-│       └── width_mismatch.v # Width mismatch (Verilator warning)
-├── systemverilog/
-│   ├── pkg_types.sv         # SV package with typedef/enum
-│   ├── counter_sv.sv        # SV module using package types  ← set as Top File
-│   └── tb_counter_sv.sv     # SV testbench
-└── vivado/
-    ├── build_project.tcl    # Sample Vivado build script
-    └── constraints.xdc      # Sample XDC constraint file
+├── linter_test/          # Linter — cross-module resolution and error reporting
+│   ├── top_module/       #   Clean multi-file design (zero errors expected)
+│   └── errors/           #   Intentional errors, one per file
+├── systemverilog/        # SystemVerilog package, module, testbench
+├── brace_match/          # Structural keyword pairs (v0.3 lexer feature)
+├── tcl_test/             # Tcl + XDC language support: folding, highlighting, completion
+├── vivado/               # Standalone Tcl/XDC scripts for the action layer
+├── test_ip/              # A packaged IP, for IP-repository features
+└── mcp/                  # AI/MCP end-to-end fixture — see mcp/README.md
 ```
+
+Vivado build output under any of these is gitignored. See the
+`### Test fixtures ###` block in the repo `.gitignore`; a single block-design
+build writes over 170 MB.
 
 ---
 
-## Feature Testing Checklist
+## 1. Linter — single file
 
-### 1. Linter — Single-File Mode
 1. Open `linter_test/errors/syntax_error.v`
-2. Verify a red squiggle appears on ~line 14
-3. Hover to read the error message
-4. Open the **Verilog Linter Debugger** (bottom panel) to see raw output
+2. A red squiggle appears around line 14; hover shows the message
+3. Open the **Verilog Linter Debugger** panel (bottom) to see the raw output
 
-### 2. Linter — Top Folder Mode (multi-file)
+Repeat for `undeclared_wire.v`, `undeclared_wire2.v`, `undeclared_wire3.v`,
+and `width_mismatch.v` (the last is a Verilator warning — switch the active
+linter in HDL Settings to see it).
+
+## 2. Linter — top folder (cross-module)
+
 1. Right-click `linter_test/top_module/` → **Set as Verilog Top Folder**
-   - The folder should get a gold folder icon
-2. Open `top.v` — no errors should appear (all modules are found)
-3. Try `linter_test/errors/undeclared_wire.v` — error should still appear
+   - The folder gets a highlighted background and a `[Top Folder]` label
+2. Open `top.v` — **no** errors: `counter` and `adder` now resolve
+3. Right-click a different folder and set it as the top folder instead
+   - `top.v` should immediately regain its unresolved-module errors, with no
+     manual refresh — `LinterSettingsBroadcaster` restarts the daemon
 
-### 3. Top File (elaboration entry-point)
-1. Set `linter_test/top_module/` as Top Folder (see above)
-2. Right-click `top.v` → **Set as Verilog Top File**
-   - The file should get a gold star icon
-3. Open any file in the folder — linter now passes `-s top` / `--top-module top`
-4. Check the **Verilog Linter Debugger** raw output to confirm the flag appears
+## 3. Linter — files outside the top folder
 
-### 4. SystemVerilog
+With `linter_test/top_module/` set as top folder, open
+`linter_test/errors/syntax_error.v`.
+
+Expected: **no** squiggles, because `collectInformation` skips files whose path
+is outside the top folder. This is the gate, not a bug.
+
+## 4. SystemVerilog
+
 1. Right-click `systemverilog/` → **Set as Verilog Top Folder**
-2. Right-click `counter_sv.sv` → **Set as Verilog Top File**
-3. Open `counter_sv.sv` — no errors for a correct SV design
+2. Open `counter_sv.sv` — no errors; `pkg_types.sv` resolves
+3. Check `.sv` and `.svh` both get the Verilog file-type icon
 
-### 5. Apply Button Blinking
-1. Open **HDL Settings** (right-side panel)
-2. Edit any field (e.g., change the Board value)
-3. The **● Unsaved changes** label and the **Apply** button should start blinking
-4. Click **Apply** — blinking stops
-5. Click **Reset** — blinking stops and edits are discarded
+## 5. Brace matching — `brace_match/`
 
-### 6. Test Button Verification
-1. In HDL Settings, set the Iverilog Path to a valid path (e.g. `/usr/bin/iverilog`)
-2. Click **Test** — should show version information
-3. Set it to `/usr/bin/ls` (wrong binary) and click **Test** — should show an error
-4. Set it to `/nonexistent/path` and click **Test** — should say "File not found"
+Open `all_pairs.v` and place the caret on each opening keyword. Its partner
+must highlight:
 
-### 7. Tutorial
-1. In HDL Settings, click the **? Help** button
-2. Navigate through the 6 tutorial sections using **Next ›** / **‹ Previous**
+| Opens | Closes |
+|---|---|
+| `module` | `endmodule` |
+| `begin` | `end` |
+| `case` | `endcase` |
+| `function` | `endfunction` |
+| `task` | `endtask` |
+| `generate` | `endgenerate` |
 
-### 8. Vivado Integration
-1. Configure Vivado executable path in HDL Settings → Apply
+Then open `not_keywords.v`. Nothing there should match: every identifier only
+*looks* like a keyword (`endmodules`, `module_name`, `beginning`), and the
+keywords inside the comment and the `$display` string must be inert.
+
+## 6. Tcl and XDC — `tcl_test/`
+
+**Folding** — open `folding.tcl`, press Ctrl+Shift+Minus. Every `proc`, `for`,
+`foreach`, `while`, `if`, `switch`, `namespace eval` and bare braced block
+collapses; nested blocks fold independently.
+
+**Highlighting** — open `syntax_and_vars.tcl`. Comments, strings, `$var`,
+`${var}`, numbers and Vivado commands each get a distinct colour. Compare with
+Settings → Editor → Color Scheme → Tcl.
+
+**Completion** — the checklist at the bottom of `syntax_and_vars.tcl` lists
+prefixes to type and the commands each should offer.
+
+**XDC** — open `timing.xdc`. It must get the same Tcl highlighting and folding;
+`.xdc` is registered against `TclFileType`.
+
+## 7. Vivado actions — `vivado/`
+
+1. Configure the Vivado path in HDL Settings → **Apply**
 2. Right-click `vivado/build_project.tcl` → **Vivado → Run Tcl Script**
-   - Vivado should open in GUI mode and execute the script
-3. Right-click `linter_test/top_module/` → **Vivado → Build Project**
-   - Vivado should open and create a project with all `.v` files
+   (or Ctrl+Alt+R) — Vivado opens and sources the script
+3. Right-click `linter_test/top_module/` → **Vivado → Build Project** —
+   Vivado opens with all `.v` files added
+4. Right-click `test_ip/` → **Vivado → IP Composer**
 
-### 9. Icon Legend
+Note these use the one-shot `ProcessBuilder` path in `VivadoUtils`, which is
+**separate** from the Viva-CoTerm session. A project opened this way is a
+different Vivado instance from the one the console is attached to.
+
+## 8. Vivado Console (Viva-CoTerm)
+
+1. Right-click any folder → **Vivado → Launch Vivado Console**
+2. Status badge goes `● STOPPED` → `● STARTING` → `● RUNNING`
+3. Console prints `[VivaCo-Term] Bridge active.`
+4. Type `puts hello` → prints `hello`
+5. Type `set x [expr {1/0}]` → the error line is red
+6. Up/Down arrow cycles command history
+7. **Run Command ▼** → pick a command → parameter dialog → runs
+8. **Restart** relaunches; **Stop** shuts down and disables the input field
+
+The GUI must stay usable throughout — that is the whole point of the socket
+bridge over stdin.
+
+## 9. HDL Settings
+
+1. Edit any field — **● Unsaved changes** and **Apply** start blinking
+2. **Apply** stops the blinking; **Reset** discards and stops it
+3. Set the Iverilog path to `/usr/bin/iverilog` → **Test** → shows a version
+4. Set it to `/usr/bin/ls` → **Test** → reports the wrong binary
+5. Set it to `/nonexistent/path` → **Test** → reports file not found
+6. **? Help** opens the tutorial; Next/Previous walk all sections
+
+## 10. MCP / AI integration
+
+See **[`mcp/README.md`](mcp/README.md)** — handshake, the six `tools/call`
+guards, the project flow, block-design ops, the raw-Tcl gate, and the
+serialisation check.
+
+---
+
+## Icon legend
+
 | Icon | Meaning |
 |------|---------|
-| Gold folder | Top Folder |
-| Green file with gold star | Top File |
-| Green square with `V` | Verilog/SV file type |
-| Blue chip | HDL Settings / Linter Debugger panel |
+| Highlighted folder + `[Top Folder]` | Linter top folder |
+| Green square with `V` | Verilog / SystemVerilog file |
+| Blue chip | HDL Settings, Linter Debugger, Vivado Console panels |
+
+---
+
+## `ai/` — session records, not fixtures
+
+`ai/` holds the Tcl and console logs from real AI-driven MCP sessions
+(`build_bd.tcl`, `run_impl.tcl`, `my_dma_project_build.tcl` and their logs).
+They are kept as a record of what the tools actually generated and what Vivado
+replied.
+
+They are **not runnable as-is** — they contain absolute paths from the machine
+that produced them. For a portable, runnable exercise use `mcp/` instead.

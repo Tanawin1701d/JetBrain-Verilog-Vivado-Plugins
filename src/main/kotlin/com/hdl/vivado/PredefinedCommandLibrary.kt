@@ -427,4 +427,15 @@ object PredefinedCommandLibrary {
     )
 
     fun findById(id: String): PredefinedCommand? = commands.firstOrNull { it.id == id }
+
+    /**
+     * Commands that execute arbitrary Tcl. VivaMcpServer hides these from
+     * tools/list and refuses tools/call unless the user granted raw-Tcl
+     * permission for the session.
+     *
+     * Declared here, next to the commands themselves, so renaming a command id
+     * cannot silently disarm the gate — PredefinedCommandLibraryTest asserts
+     * every id in this set still resolves.
+     */
+    val rawTclToolIds: Set<String> = setOf("runTclRaw", "runTclScript")
 }
