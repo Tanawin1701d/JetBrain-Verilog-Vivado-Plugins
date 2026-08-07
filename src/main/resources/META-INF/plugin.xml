@@ -4,12 +4,39 @@
     <vendor email="tanawin1701d@outlook.com" url="https://github.com/Merge-Panic-Society/JetBrain-Verilog-Vivado-Plugins">Merge Panic Society</vendor>
 
     <description><![CDATA[
-    <p><b>Let an AI assistant drive Vivado &mdash; and keep the IDE it drives it from.</b></p>
+    <p><b>Let an AI assistant drive Vivado while you watch &mdash; and work alongside it.</b></p>
 
     <p>FPGA work means living in two windows: your editor for the RTL, and Vivado for everything
     else. This plugin closes that gap, and then goes further &mdash; it can hand your live Vivado
     session to an AI assistant, so building a block design or chasing a timing failure becomes a
     conversation instead of an afternoon of clicking.</p>
+
+    <p>The part that makes it usable: <b>the Vivado GUI stays open and you keep using it</b>. You
+    watch the assistant wire up the block design in the canvas as it happens, and you can click,
+    inspect and type your own Tcl in the same session while it works. Human in the loop, not a
+    black box that hands you a result.</p>
+
+    <h3>Everything it does, at a glance</h3>
+    <ul>
+        <li><b>AI assistant (MCP), with you in the loop</b> &mdash; let Claude Code, Junie or Codex
+            drive your live Vivado session while the <b>GUI stays open in front of you</b>. Watch
+            each block design get wired and each run kick off as it happens, and keep clicking and
+            typing in the same session while the assistant works. Off by default.</li>
+        <li><b>Vivado Console</b> &mdash; a live Tcl terminal on a running session; the Vivado GUI
+            stays usable while you type.</li>
+        <li><b>Verilog &amp; SystemVerilog</b> &mdash; highlighting, completion, commenting, and
+            <code>module</code>/<code>endmodule</code>-aware brace matching.</li>
+        <li><b>Tcl &amp; XDC</b> &mdash; highlighting, folding, <code>${var}</code> handling, and
+            Vivado command completion.</li>
+        <li><b>Cross-module linting</b> &mdash; Icarus Verilog or Verilator inline, analysing your
+            whole design so cross-file instantiations resolve.</li>
+        <li><b>One-click Vivado</b> &mdash; build a project from a folder, open an <code>.xpr</code>,
+            run Tcl/XDC scripts, package IP.</li>
+        <li><b>Vitis &amp; Vitis HLS</b> &mdash; open a workspace or create an HLS kernel from a folder.</li>
+    </ul>
+
+    <br>
+    <p><b>&mdash;&mdash;&mdash; In detail &mdash;&mdash;&mdash;</b></p>
 
     <h3>AI assistants can drive your Vivado session</h3>
 
@@ -19,12 +46,24 @@
     block designs, apply board presets, run connection automation, assign addresses, generate HDL
     wrappers, run synthesis and implementation, produce a bitstream, and program a device.</p>
 
-    <p>Ask for what you want and watch it happen in the Vivado GUI:</p>
+    <p>Ask for what you want:</p>
     <ul>
         <li><i>"Create a Zynq project for my KV260, add the PS, and wire up an AXI GPIO."</i></li>
         <li><i>"Synthesis failed &mdash; read the log and tell me what broke."</i></li>
         <li><i>"Add these RTL files, set top to <code>design_1_wrapper</code>, and build a bitstream."</i></li>
     </ul>
+
+    <h3>This is not a headless robot &mdash; you are sitting next to it</h3>
+
+    <p>The assistant drives the <b>same Vivado session you are looking at</b>. The GUI is open the
+    whole time, so you see the block design get wired up, the IP get configured and the runs start
+    &mdash; live, in the canvas, not as a summary afterwards.</p>
+
+    <p>And you are not locked out while it works. <b>You can keep using Vivado alongside the
+    assistant</b>: click around the block design, open a report, or type your own Tcl into the
+    Vivado Console. Every command &mdash; yours and the assistant's &mdash; goes through one queue,
+    so the two of you share the session without colliding. If you do not like where it is heading,
+    you can act on it immediately rather than waiting for it to finish.</p>
 
     <p><b>You stay in charge the whole time:</b></p>
     <ul>
