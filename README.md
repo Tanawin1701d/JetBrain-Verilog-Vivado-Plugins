@@ -1,8 +1,9 @@
-# HDL and Vivado Support
+# HDL and Vivado + MCP Support
 
-An IntelliJ IDEA plugin for FPGA work: Verilog and SystemVerilog language support,
-cross-module linting, and a live Tcl terminal wired into a running Xilinx Vivado
-session — with optional MCP access so an AI assistant can drive it too.
+Hand your live Xilinx Vivado session to an AI assistant — Claude Code, Junie, Codex,
+or any MCP client — from inside IntelliJ IDEA. Plus the things you'd want anyway:
+Verilog and SystemVerilog language support, cross-module linting, and a Tcl terminal
+attached to the running session.
 
 **Version 1.0.0** · IntelliJ IDEA 2025.1+ · [Changelog](CHANGELOG.md)
 
@@ -12,17 +13,17 @@ session — with optional MCP access so an AI assistant can drive it too.
 
 | | |
 |---|---|
+| **AI assistant (MCP)** | Connect Claude Code, Junie, Codex or any MCP client and let it drive Vivado — 27 parameter-checked commands, off by default, safety-gated. [Details](#ai-assistant-support-mcp) |
 | **Verilog / SystemVerilog** | Highlighting, completion, commenting, and brace matching for `module`/`endmodule`, `begin`/`end`, `case`/`endcase`, `function`, `task`, `generate`. Files: `.v .vh .sv .svh` |
 | **Tcl / XDC** | Highlighting, folding for `proc` bodies and braced blocks, `${var}` handling, Vivado command completion. Files: `.tcl .xdc` |
 | **Linting** | Icarus Verilog or Verilator, inline. Set a **Top Folder** and modules are analysed together, so cross-file instantiations resolve. |
 | **Vivado** | Build a project from a folder, open an existing `.xpr`, run Tcl/XDC scripts (`Ctrl+Alt+R`), package IP through IP Composer. |
 | **Vitis** | Open a Vitis workspace, create a Vitis HLS kernel. |
 | **Vivado Console** | A bidirectional Tcl terminal on a live session. Runs over a socket rather than stdin, so the Vivado GUI stays usable while you type. 27 commands in a toolbar palette. |
-| **AI assistant (MCP)** | Optional, off by default — see below. |
 
 ## Install
 
-**From the JetBrains Marketplace** — Settings → Plugins → Marketplace → search *HDL and Vivado Support*.
+**From the JetBrains Marketplace** — Settings → Plugins → Marketplace → search *HDL and Vivado + MCP Support*.
 
 **From source:**
 

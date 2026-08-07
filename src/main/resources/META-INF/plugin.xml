@@ -1,16 +1,50 @@
 <idea-plugin>
     <id>com.hdl.verilog-vivado-plugin</id>
-    <name>HDL and Vivado Support</name>
+    <name>HDL and Vivado + MCP Support</name>
     <vendor email="tanawin1701d@outlook.com" url="https://github.com/Merge-Panic-Society/JetBrain-Verilog-Vivado-Plugins">Merge Panic Society</vendor>
 
     <description><![CDATA[
-    <p><b>Write Verilog, lint it, and drive Vivado &mdash; without leaving your IDE.</b></p>
+    <p><b>Let an AI assistant drive Vivado &mdash; and keep the IDE it drives it from.</b></p>
 
     <p>FPGA work means living in two windows: your editor for the RTL, and Vivado for everything
-    else. This plugin closes that gap. You get real language support for Verilog, SystemVerilog
-    and Tcl, cross-module linting as you type, and a live Tcl terminal wired straight into a
-    running Vivado session &mdash; so the build, the constraints and the block design stay one
-    keystroke away.</p>
+    else. This plugin closes that gap, and then goes further &mdash; it can hand your live Vivado
+    session to an AI assistant, so building a block design or chasing a timing failure becomes a
+    conversation instead of an afternoon of clicking.</p>
+
+    <h3>AI assistants can drive your Vivado session</h3>
+
+    <p>Connect <b>Claude Code</b>, <b>Junie</b>, <b>Codex</b>, or any client that speaks the Model
+    Context Protocol, and it gets 27 curated, parameter-checked Vivado commands &mdash; the same
+    ones you have. It can create and open projects, add sources, set the top module, build and wire
+    block designs, apply board presets, run connection automation, assign addresses, generate HDL
+    wrappers, run synthesis and implementation, produce a bitstream, and program a device.</p>
+
+    <p>Ask for what you want and watch it happen in the Vivado GUI:</p>
+    <ul>
+        <li><i>"Create a Zynq project for my KV260, add the PS, and wire up an AXI GPIO."</i></li>
+        <li><i>"Synthesis failed &mdash; read the log and tell me what broke."</i></li>
+        <li><i>"Add these RTL files, set top to <code>design_1_wrapper</code>, and build a bitstream."</i></li>
+    </ul>
+
+    <p><b>You stay in charge the whole time:</b></p>
+    <ul>
+        <li><b>You start it, every time.</b> The server never starts on its own, and a safety
+            agreement explains what you are enabling before it opens.</li>
+        <li><b>Arbitrary Tcl is opt-in.</b> The unrestricted-Tcl tools are hidden from the
+            assistant and refused unless you enable them for that one session.</li>
+        <li><b>Locked down.</b> Loopback only, no CORS headers, browser origins and rebound host
+            names refused, and a fresh bearer token minted for every session.</li>
+        <li><b>Nothing happens silently.</b> Every command is printed to the Vivado Console
+            before it executes, so you watch the work as it happens &mdash; and you can type into
+            the same session while the assistant works.</li>
+        <li><b>Vivado must be running.</b> No live session means every tool is refused.</li>
+    </ul>
+
+    <h3>Vivado Console &mdash; the terminal underneath it</h3>
+    <p>The same channel the assistant uses is yours to type into: a bidirectional Tcl terminal
+    attached to a live Vivado session. Because it talks over a socket rather than stdin, the Vivado
+    GUI stays fully usable while you work. 27 parameterised commands are available from a toolbar
+    palette, with command history on the up/down arrows.</p>
 
     <h3>Language support</h3>
     <ul>
@@ -38,29 +72,6 @@
         <li><b>Run a Tcl or XDC script</b> from the project view (<code>Ctrl+Alt+R</code>).</li>
         <li><b>Package IP</b> through IP Composer, and open <b>Vitis</b> workspaces or create
             <b>Vitis HLS</b> kernels.</li>
-        <li><b>Vivado Console</b> &mdash; a bidirectional Tcl terminal attached to a live session.
-            Because it talks over a socket rather than stdin, the Vivado GUI stays fully usable
-            while you type. 27 parameterised commands are available from a toolbar palette.</li>
-    </ul>
-
-    <h3>Optional: let an AI assistant drive Vivado</h3>
-    <p>The plugin can expose your live session to an AI assistant &mdash; <b>Claude Code</b>,
-    <b>Junie</b>, <b>Codex</b>, or any client that speaks the Model Context Protocol &mdash; through
-    an embedded MCP server. The assistant gets the same 27 curated, parameter-checked commands you
-    have: create projects, add sources, build and wire block designs, apply board presets, assign
-    addresses, run synthesis and implementation, generate a bitstream, program a device.</p>
-
-    <p><b>It is off by default, and built so you stay in charge:</b></p>
-    <ul>
-        <li><b>You start it, every time.</b> The server never starts on its own, and a safety
-            agreement explains what you are enabling before it opens.</li>
-        <li><b>Arbitrary Tcl is opt-in.</b> The unrestricted-Tcl tools are hidden from the
-            assistant and refused unless you enable them for that one session.</li>
-        <li><b>Locked down.</b> Loopback only, no CORS headers, browser origins and rebound host
-            names refused, and a fresh bearer token minted for every session.</li>
-        <li><b>Nothing happens silently.</b> Every command is printed to the Vivado Console
-            before it executes, so you watch the work as it happens.</li>
-        <li><b>Vivado must be running.</b> No live session means every tool is refused.</li>
     </ul>
 
     <h3>Requirements</h3>
@@ -142,14 +153,12 @@
                            id="com.hdl.settings.HdlSettingsConfigurable"
                            displayName="HDL Settings"/>
 
+        <!-- Only plain classes are declared here. LinterSettingsBroadcaster,
+             TclBridgeService, VivadoProcessManager and VivaMcpServer carry
+             @Service(Service.Level.PROJECT), which registers them on its own —
+             declaring them again is a duplicate registration and an error. -->
         <projectService serviceImplementation="com.hdl.vivado.VivadoSettingsState"/>
         <projectService serviceImplementation="com.hdl.verilog.linter.LinterSettingsState"/>
-        <projectService serviceImplementation="com.hdl.verilog.linter.LinterSettingsBroadcaster"/>
-
-        <!-- Viva-CoTerm services -->
-        <projectService serviceImplementation="com.hdl.vivado.TclBridgeService"/>
-        <projectService serviceImplementation="com.hdl.vivado.VivadoProcessManager"/>
-        <projectService serviceImplementation="com.hdl.mcp.VivaMcpServer"/>
 
         <!-- Notification Group -->
         <notificationGroup id="Vivado" displayType="BALLOON"/>

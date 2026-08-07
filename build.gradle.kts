@@ -47,6 +47,11 @@ intellijPlatform {
 /**
  * Marketplace change notes, rendered from the top section of CHANGELOG.md so the
  * two cannot drift apart. Returns empty when the file is missing or has no entries.
+ *
+ * Understands two shapes inside the section:
+ *   **Group heading**   -> <b>Group heading</b>, starting a fresh list
+ *   - bullet            -> <li>bullet</li>
+ * Inline `code` spans become <code> so the notes read the same as the file.
  */
 fun latestChangeNotesHtml(): String {
     val changelog = file("CHANGELOG.md")
@@ -57,12 +62,26 @@ fun latestChangeNotesHtml(): String {
         setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL)
     ).find(changelog.readText())?.groupValues?.get(1) ?: return ""
 
-    val items = firstSection.lines()
-        .map { it.trim() }
-        .filter { it.startsWith("- ") }
-        .joinToString("\n") { "  <li>${it.removePrefix("- ").trim()}</li>" }
+    fun inline(s: String) = Regex("`([^`]+)`").replace(s) { "<code>${it.groupValues[1]}</code>" }
 
-    return if (items.isBlank()) "" else "<ul>\n$items\n</ul>"
+    val out = StringBuilder()
+    var listOpen = false
+    for (line in firstSection.lines().map { it.trim() }) {
+        val heading = Regex("""^\*\*(.+)\*\*$""").find(line)?.groupValues?.get(1)
+        when {
+            heading != null -> {
+                if (listOpen) { out.appendLine("</ul>"); listOpen = false }
+                out.appendLine("<b>${inline(heading)}</b>")
+            }
+            line.startsWith("- ") -> {
+                if (!listOpen) { out.appendLine("<ul>"); listOpen = true }
+                out.appendLine("  <li>${inline(line.removePrefix("- ").trim())}</li>")
+            }
+        }
+    }
+    if (listOpen) out.appendLine("</ul>")
+
+    return out.toString().trim()
 }
 
 tasks {
