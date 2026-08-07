@@ -33,6 +33,17 @@ kotlin {
     jvmToolchain(21)
 }
 
+intellijPlatform {
+    pluginVerification {
+        // Without this block `verifyPlugin` fails with "No IDE resolved for verification".
+        // recommended() resolves the IDEs covered by the sinceBuild/untilBuild range,
+        // so widening sinceBuild automatically widens what gets verified.
+        ides {
+            recommended()
+        }
+    }
+}
+
 /**
  * Marketplace change notes, rendered from the top section of CHANGELOG.md so the
  * two cannot drift apart. Returns empty when the file is missing or has no entries.
