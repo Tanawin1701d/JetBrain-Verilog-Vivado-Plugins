@@ -4,48 +4,81 @@
     <vendor email="tanawin1701d@outlook.com" url="https://github.com/Merge-Panic-Society/JetBrain-Verilog-Vivado-Plugins">Merge Panic Society</vendor>
 
     <description><![CDATA[
-    <b>HDL development and Xilinx Vivado integration for IntelliJ IDEA.</b><br>
-    <br>
-    Transform your IDE into a powerful hardware development environment with advanced support for Verilog, SystemVerilog, and Tcl scripts.<br>
-    <br>
-    <b>Core Features:</b><br>
+    <p><b>Write Verilog, lint it, and drive Vivado &mdash; without leaving your IDE.</b></p>
+
+    <p>FPGA work means living in two windows: your editor for the RTL, and Vivado for everything
+    else. This plugin closes that gap. You get real language support for Verilog, SystemVerilog
+    and Tcl, cross-module linting as you type, and a live Tcl terminal wired straight into a
+    running Vivado session &mdash; so the build, the constraints and the block design stay one
+    keystroke away.</p>
+
+    <h3>Language support</h3>
     <ul>
-        <li><b>Advanced Verilog Support:</b> syntax highlighting, smart auto-completion, and brace matching for .v and .sv files.</li>
-        <li><b>Cross-Module Linting:</b> Intelligent cross-module dependency checks and analysis.</li>
-        <li><b>Vivado Integration:</b> One-click project generation, IP Composer management, and direct Tcl/XDC script execution.</li>
-        <li><b>Vivado Console (Viva-CoTerm):</b> a live, bidirectional Tcl terminal attached to a running Vivado session &mdash; the GUI stays usable while you type.</li>
-        <li><b>Professional Linting:</b> Real-time feedback with Icarus Verilog or Verilator. Multi-pass analysis automatically handles project-wide dependencies.</li>
-        <li><b>Smart "Top Folder" Context:</b> Define your project root to resolve cross-module syntax errors and dependencies instantly.</li>
-        <li><b>Productivity Tools:</b> Integrated linter debugger panel, configurable FPGA settings, and built-in tutorials.</li>
+        <li><b>Verilog and SystemVerilog</b> (<code>.v .vh .sv .svh</code>) &mdash; syntax
+            highlighting, context-aware completion, commenting, and brace matching that pairs
+            <code>module</code>/<code>endmodule</code>, <code>begin</code>/<code>end</code>,
+            <code>case</code>/<code>endcase</code> and the rest.</li>
+        <li><b>Tcl and XDC</b> (<code>.tcl .xdc</code>) &mdash; highlighting, code folding for
+            <code>proc</code> bodies and braced blocks, <code>${var}</code> handling, and completion
+            for common Vivado commands.</li>
     </ul>
 
-    <b>AI assistant support (MCP)</b><br>
-    The plugin can expose your live Vivado session to an AI assistant &mdash; Claude Code, Junie,
-    Codex or any other client that speaks the Model Context Protocol &mdash; through an embedded
-    MCP server. The assistant gets 27 curated, parameter-checked Vivado tools: create and open
-    projects, add sources, set the top module, build block designs, connect and configure IP,
-    run synthesis and implementation, generate bitstreams, and program a device.<br>
-    <br>
-    It is off by default and built to stay under your control:<br>
+    <h3>Linting that understands your whole design</h3>
     <ul>
-        <li><b>Manual start only.</b> The server never starts on its own. You start it from the
-            Vivado Console toolbar and accept a safety agreement each time.</li>
-        <li><b>Arbitrary Tcl is opt-in.</b> The tools that run unrestricted Tcl are hidden from
-            the assistant and refused unless you explicitly enable them for that session.</li>
-        <li><b>Loopback plus a token.</b> The server binds to 127.0.0.1, sends no CORS headers,
-            refuses requests from browser origins or rebound host names, and requires a
-            per-session bearer token you copy from the panel.</li>
-        <li><b>Everything is visible.</b> Each command the assistant issues is echoed into the
-            Vivado Console before it runs, so you can watch the work as it happens.</li>
-        <li><b>Vivado must be running.</b> Every tool is refused until you have launched a session.</li>
+        <li>Real-time errors and warnings from <b>Icarus Verilog</b> or <b>Verilator</b>, inline in
+            the editor.</li>
+        <li>Mark a folder as the <b>Top Folder</b> and the linter analyses your modules together
+            &mdash; cross-file instantiations resolve instead of showing up as phantom errors.</li>
+        <li>A debugger panel with the raw tool output when you need to see exactly what ran.</li>
     </ul>
 
-    <i>Streamline your FPGA design cycle and focus on your logic.</i><br>
-    <br>
-    <small>Parts of this plugin were developed with AI assistance; all released code is reviewed
-    and covered by an automated test suite. Not affiliated with, endorsed by, or sponsored by
-    AMD/Xilinx or JetBrains. Vivado, Vitis and Xilinx are trademarks of Advanced Micro Devices,
-    Inc.; IntelliJ IDEA is a trademark of JetBrains s.r.o.</small>
+    <h3>Vivado and Vitis</h3>
+    <ul>
+        <li><b>Build a project</b> from a folder of HDL, or open an existing <code>.xpr</code>.</li>
+        <li><b>Run a Tcl or XDC script</b> from the project view (<code>Ctrl+Alt+R</code>).</li>
+        <li><b>Package IP</b> through IP Composer, and open <b>Vitis</b> workspaces or create
+            <b>Vitis HLS</b> kernels.</li>
+        <li><b>Vivado Console</b> &mdash; a bidirectional Tcl terminal attached to a live session.
+            Because it talks over a socket rather than stdin, the Vivado GUI stays fully usable
+            while you type. 27 parameterised commands are available from a toolbar palette.</li>
+    </ul>
+
+    <h3>Optional: let an AI assistant drive Vivado</h3>
+    <p>The plugin can expose your live session to an AI assistant &mdash; <b>Claude Code</b>,
+    <b>Junie</b>, <b>Codex</b>, or any client that speaks the Model Context Protocol &mdash; through
+    an embedded MCP server. The assistant gets the same 27 curated, parameter-checked commands you
+    have: create projects, add sources, build and wire block designs, apply board presets, assign
+    addresses, run synthesis and implementation, generate a bitstream, program a device.</p>
+
+    <p><b>It is off by default, and built so you stay in charge:</b></p>
+    <ul>
+        <li><b>You start it, every time.</b> The server never starts on its own, and a safety
+            agreement explains what you are enabling before it opens.</li>
+        <li><b>Arbitrary Tcl is opt-in.</b> The unrestricted-Tcl tools are hidden from the
+            assistant and refused unless you enable them for that one session.</li>
+        <li><b>Locked down.</b> Loopback only, no CORS headers, browser origins and rebound host
+            names refused, and a fresh bearer token minted for every session.</li>
+        <li><b>Nothing happens silently.</b> Every command is printed to the Vivado Console
+            before it executes, so you watch the work as it happens.</li>
+        <li><b>Vivado must be running.</b> No live session means every tool is refused.</li>
+    </ul>
+
+    <h3>Requirements</h3>
+    <ul>
+        <li>IntelliJ IDEA 2025.1 or newer.</li>
+        <li>Xilinx Vivado (2023.2 or newer recommended) for the Vivado features &mdash; set the
+            path in <b>Settings &rarr; Tools &rarr; HDL Settings</b>.</li>
+        <li>Icarus Verilog or Verilator for linting. Everything else works without them.</li>
+    </ul>
+
+    <p><a href="https://github.com/Merge-Panic-Society/JetBrain-Verilog-Vivado-Plugins">Source,
+    issue tracker and documentation on GitHub</a>.</p>
+
+    <p><small>Parts of this plugin were developed with AI assistance. Every release is reviewed and
+    covered by an automated test suite; please report anything that looks wrong.<br>
+    Not affiliated with, endorsed by, or sponsored by AMD/Xilinx or JetBrains. Vivado, Vitis and
+    Xilinx are trademarks of Advanced Micro Devices, Inc. IntelliJ IDEA is a trademark of
+    JetBrains s.r.o.</small></p>
   ]]></description>
 
     <depends>com.intellij.modules.platform</depends>

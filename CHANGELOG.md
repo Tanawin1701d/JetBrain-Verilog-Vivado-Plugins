@@ -3,6 +3,21 @@
 The top section of this file is rendered into the Marketplace change notes by
 `build.gradle.kts` — keep the newest release first, and keep entries as `- ` bullets.
 
+## 1.0.0 — First stable release
+
+Everything from 0.3.0 below, plus the work needed to call it stable:
+
+- Security: the MCP server now requires a per-session bearer token, refuses browser origins, refuses rebound host names, and sends no CORS headers
+- Security: Build Project and IP Composer ask before deleting a previous run, and use per-source-folder working directories so one project cannot destroy another's
+- Fixed: JSON unescaping corrupted any MCP argument containing a backslash
+- Fixed: brace counting miscounted braces inside Vivado property strings
+- Added: 86 unit tests covering access control, the JSON layer, tool schemas, all 27 commands, Verilog tokenisation, and launcher paths
+- Added: connection guide shown after starting the MCP server, with a copyable client config
+- Added: blocked/live icon on the Start MCP button so server state is readable at a glance
+- Changed: sinceBuild is now 251, matching the platform actually built and tested against
+- Removed: dead template and scratch files, and an unused Tcl generator that emitted `create_project -force`
+- Docs: AI-assistance disclosure, trademark notice, and rewritten README and Marketplace description
+
 ## 0.3.0 — Viva-CoTerm
 
 - New: Vivado Console tool window with a live, bidirectional Tcl terminal

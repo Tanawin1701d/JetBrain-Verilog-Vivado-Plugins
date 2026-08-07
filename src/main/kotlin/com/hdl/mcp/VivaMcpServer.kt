@@ -121,7 +121,7 @@ class VivaMcpServer(private val project: Project) : Disposable {
             when (method) {
                 // Handshake: advertise protocol version + tools capability back to the client.
                 "initialize" -> {
-                    val resp = """{"jsonrpc":"2.0","id":$id,"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"VivaCo-Term MCP","version":"0.3.0"}}}"""
+                    val resp = """{"jsonrpc":"2.0","id":$id,"result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"serverInfo":{"name":"VivaCo-Term MCP","version":"1.0.0"}}}"""
                     sendResponse(ex, 200, resp)
                 }
                 // Client's post-handshake ack — a notification, so no result body is expected.
