@@ -1,5 +1,6 @@
 package com.hdl.coterm
 
+import com.hdl.mcp.McpConnectionInfoDialog
 import com.hdl.mcp.McpStartAgreementDialog
 import com.hdl.mcp.McpStartChoice
 import com.hdl.mcp.VivaMcpServer
@@ -8,6 +9,7 @@ import com.hdl.vivado.TclBridgeService
 import com.hdl.vivado.VivadoProcessManager
 import com.hdl.vivado.VivadoSettingsState
 import com.hdl.vivado.VivadoStatus
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -371,6 +373,10 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
             val mode = if (server.rawTclAllowed) "raw Tcl ENABLED" else "raw Tcl disabled"
             appendLine("[VivaCo-Term] MCP server started on http://127.0.0.1:$port ($mode).", styleInfo)
 
+            // The server is listening, but the user still has to point a client at it —
+            // show how, with the URL and a copyable config.
+            McpConnectionInfoDialog(project, server.serverUrl, server.rawTclAllowed).show()
+
             // The server is up, but tools cannot run until a live Vivado session exists.
             // If Vivado isn't running yet, nudge the user to launch it now.
             promptLaunchVivadoIfNeeded()
@@ -398,6 +404,7 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
     }
 
     // Reflect the live MCP server state in the toolbar button and status label.
+    // The icon carries the state (blocked vs live) and the text carries the action.
     private fun updateMcpLabel() {
         val server = VivaMcpServer.getInstance(project)
         if (server.isRunning) {
@@ -406,10 +413,14 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
             mcpUrlLabel.text = "MCP: http://127.0.0.1:$port  [raw Tcl $raw]"
             mcpUrlLabel.foreground = Color(120, 190, 120)
             btnMcp.text = "Stop MCP"
+            btnMcp.icon = AllIcons.General.InspectionsOK
+            btnMcp.toolTipText = "MCP server is running on http://127.0.0.1:$port — click to stop it"
         } else {
             mcpUrlLabel.text = "MCP: stopped"
             mcpUrlLabel.foreground = Color.GRAY
             btnMcp.text = "Start MCP"
+            btnMcp.icon = AllIcons.General.InspectionsTrafficOff
+            btnMcp.toolTipText = "MCP server is not started — AI assistants cannot reach this project"
         }
     }
 
