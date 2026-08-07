@@ -10,7 +10,7 @@ The top section of this file is rendered into the Marketplace change notes by
 - New: 27 predefined Tcl commands covering projects, synthesis, implementation, bitstreams and block design
 - New: Run Command palette in the toolbar for parameterised commands
 - New: embedded MCP server (default port 19999) so an AI assistant such as Claude Code or Junie can drive Vivado
-- New: MCP access control — per-session bearer token, browser origins refused, no CORS headers
+- New: MCP access control — per-session bearer token, browser origins and rebound host names refused, no CORS headers
 - New: MCP server starts only on request, behind a safety agreement that gates arbitrary-Tcl tools
 - New: connection guide shown after starting the MCP server, with a copyable client config
 - New: command history (up/down arrow) in the Tcl input field

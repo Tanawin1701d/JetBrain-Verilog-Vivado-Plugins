@@ -94,6 +94,7 @@ class VivaMcpServer(private val project: Project) : Disposable {
                 return
             }
             val decision = McpAuth.evaluate(
+                hostHeader = ex.requestHeaders.getFirst("Host"),
                 originHeader = ex.requestHeaders.getFirst("Origin"),
                 authHeader = ex.requestHeaders.getFirst("Authorization"),
                 expectedToken = expected

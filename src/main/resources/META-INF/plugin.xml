@@ -32,8 +32,9 @@
             Vivado Console toolbar and accept a safety agreement each time.</li>
         <li><b>Arbitrary Tcl is opt-in.</b> The tools that run unrestricted Tcl are hidden from
             the assistant and refused unless you explicitly enable them for that session.</li>
-        <li><b>Loopback plus a token.</b> The server binds to 127.0.0.1, refuses requests from
-            browser origins, and requires a per-session bearer token you copy from the panel.</li>
+        <li><b>Loopback plus a token.</b> The server binds to 127.0.0.1, sends no CORS headers,
+            refuses requests from browser origins or rebound host names, and requires a
+            per-session bearer token you copy from the panel.</li>
         <li><b>Everything is visible.</b> Each command the assistant issues is echoed into the
             Vivado Console before it runs, so you can watch the work as it happens.</li>
         <li><b>Vivado must be running.</b> Every tool is refused until you have launched a session.</li>

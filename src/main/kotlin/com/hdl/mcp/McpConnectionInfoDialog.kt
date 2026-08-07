@@ -115,8 +115,9 @@ class McpConnectionInfoDialog(
             <p>and give it this session token:</p>
             <p style='margin-left:12px;'><code style='font-size:13px;'><b>$token</b></code></p>
             <p style='color:gray;'>Sent as <code>Authorization: Bearer &lt;token&gt;</code>. The server
-            binds to loopback and additionally refuses any request carrying a browser
-            <code>Origin</code> header, so a web page cannot reach it even on this machine.
+            binds to loopback, sends no CORS headers, and refuses any request whose
+            <code>Host</code> is not a loopback name or that carries a browser
+            <code>Origin</code> header — so a web page cannot reach it even on this machine.
             A new token is minted every time you start the server.</p>
 
             $rawTclNote

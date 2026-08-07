@@ -53,7 +53,7 @@ generate bitstreams, and program a device.
 |---|---|
 | **Manual start only** | The server never starts on its own. You start it from the Vivado Console toolbar, and accept a safety agreement each time. |
 | **Arbitrary Tcl is opt-in** | `runTclRaw` and `runTclScript` are hidden from the assistant's tool list and refused unless you enable them for that session. |
-| **Loopback + bearer token** | Binds to `127.0.0.1`, refuses any request carrying a browser `Origin` header, and requires a per-session token you copy from the panel. A fresh token is minted on every start. |
+| **Loopback + bearer token** | Binds to `127.0.0.1`; refuses any request whose `Host` is not a loopback name (DNS-rebinding defence) or that carries a browser `Origin` header; and requires a per-session token you copy from the panel. A fresh token is minted on every start. No CORS headers are sent. |
 | **Everything is echoed** | Each command the assistant issues appears in the Vivado Console as an `[AI]` line *before* it runs. |
 | **Vivado must be running** | Every tool is refused until you have launched a session. |
 | **Serialised** | Your commands and the assistant's share one queue, so you can type while it works without interleaving. |
