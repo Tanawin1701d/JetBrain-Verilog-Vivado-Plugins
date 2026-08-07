@@ -25,6 +25,13 @@ class VivaMcpServer(private val project: Project) : Disposable {
 
     @Volatile private var rawTclEnabled = false  // whether raw-Tcl tools are permitted this session
 
+    // Per-session bearer token, minted on start(). Loopback binding alone does not keep
+    // browsers out, so every request must present this. Null while the server is stopped.
+    @Volatile private var authToken: String? = null
+
+    /** The token an MCP client must send as `Authorization: Bearer <token>`; null when stopped. */
+    val sessionToken: String? get() = authToken
+
     // Tools that execute arbitrary Tcl; gated behind the per-session raw-Tcl permission.
     // Defined in the library so a command rename cannot silently disarm the gate.
     private val rawTclTools = PredefinedCommandLibrary.rawTclToolIds
@@ -42,6 +49,7 @@ class VivaMcpServer(private val project: Project) : Disposable {
     fun start(rawTclEnabled: Boolean) {
         stop()
         this.rawTclEnabled = rawTclEnabled
+        this.authToken = McpAuth.newToken()   // fresh credential per session; never reused
         val settings = VivadoSettingsState.getInstance(project)
         val port = settings.mcpPort
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", port), 0)
@@ -52,9 +60,12 @@ class VivaMcpServer(private val project: Project) : Disposable {
     }
 
     // Tear down the HTTP server; safe to call when already stopped.
+    // Clearing the token means a stopped server cannot be reached even if a
+    // client kept the old credential.
     fun stop() {
         httpServer?.stop(0)
         httpServer = null
+        authToken = null
     }
 
     // Loopback URL an MCP client points at; recomputed from settings each access.
@@ -66,17 +77,29 @@ class VivaMcpServer(private val project: Project) : Disposable {
 
     // ---- HTTP entry point + JSON-RPC dispatch ----
 
-    // Single handler for every request: applies CORS, then routes on the JSON-RPC "method" field.
+    // Single handler for every request: authenticates, then routes on the JSON-RPC "method" field.
+    //
+    // No CORS headers are sent, deliberately. MCP clients are not browsers and do not
+    // need them; advertising Access-Control-Allow-Origin: * would invite every page the
+    // user has open to drive their Vivado session.
     private fun handleRequest(ex: HttpExchange) {
         try {
             ex.responseHeaders.add("Content-Type", "application/json")
-            ex.responseHeaders.add("Access-Control-Allow-Origin", "*")
-            ex.responseHeaders.add("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-            ex.responseHeaders.add("Access-Control-Allow-Headers", "Content-Type")
 
-            // CORS preflight: answer immediately, never reaches the JSON-RPC switch.
-            if (ex.requestMethod == "OPTIONS") {
-                sendResponse(ex, 204, "")
+            // Auth gate: browser origins are refused outright, everyone else needs the
+            // per-session bearer token shown in the Vivado Console panel.
+            val expected = authToken
+            if (expected == null) {
+                sendResponse(ex, 503, errorResponse(null, -32603, "MCP server is not running"))
+                return
+            }
+            val decision = McpAuth.evaluate(
+                originHeader = ex.requestHeaders.getFirst("Origin"),
+                authHeader = ex.requestHeaders.getFirst("Authorization"),
+                expectedToken = expected
+            )
+            if (decision != McpAuth.Decision.ALLOW) {
+                sendResponse(ex, decision.httpStatus, errorResponse(null, -32600, decision.message))
                 return
             }
 

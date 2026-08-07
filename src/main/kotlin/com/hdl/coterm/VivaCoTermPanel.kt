@@ -372,10 +372,13 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
             val port = VivadoSettingsState.getInstance(project).mcpPort
             val mode = if (server.rawTclAllowed) "raw Tcl ENABLED" else "raw Tcl disabled"
             appendLine("[VivaCo-Term] MCP server started on http://127.0.0.1:$port ($mode).", styleInfo)
+            appendLine("[VivaCo-Term] MCP token: ${server.sessionToken}", styleInfo)
 
             // The server is listening, but the user still has to point a client at it —
             // show how, with the URL and a copyable config.
-            McpConnectionInfoDialog(project, server.serverUrl, server.rawTclAllowed).show()
+            McpConnectionInfoDialog(
+                project, server.serverUrl, server.sessionToken.orEmpty(), server.rawTclAllowed
+            ).show()
 
             // The server is up, but tools cannot run until a live Vivado session exists.
             // If Vivado isn't running yet, nudge the user to launch it now.

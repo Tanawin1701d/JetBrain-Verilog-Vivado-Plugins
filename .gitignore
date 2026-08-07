@@ -72,3 +72,5 @@ test_files/**/hs_err_pid*.log
 test_files/.idea/
 *viva_ip_exec
 *viva_prj_exec
+# Local Vivado part/board selection is per-developer.
+.idea/vivadoSettings.xml

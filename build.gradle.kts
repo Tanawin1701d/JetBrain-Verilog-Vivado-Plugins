@@ -27,29 +27,40 @@ dependencies {
 }
 
 kotlin {
+    // Must match the JBR the targeted platform runs on: 2025.1 (build 251) ships JBR 21.
+    // Lowering sinceBuild below 251 without also lowering this produces a plugin the
+    // older IDE cannot load — verifyPluginProjectConfiguration reports the mismatch.
     jvmToolchain(21)
+}
+
+/**
+ * Marketplace change notes, rendered from the top section of CHANGELOG.md so the
+ * two cannot drift apart. Returns empty when the file is missing or has no entries.
+ */
+fun latestChangeNotesHtml(): String {
+    val changelog = file("CHANGELOG.md")
+    if (!changelog.exists()) return ""
+
+    val firstSection = Regex(
+        """^## .*?$(.*?)(?=^## |\z)""",
+        setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL)
+    ).find(changelog.readText())?.groupValues?.get(1) ?: return ""
+
+    val items = firstSection.lines()
+        .map { it.trim() }
+        .filter { it.startsWith("- ") }
+        .joinToString("\n") { "  <li>${it.removePrefix("- ").trim()}</li>" }
+
+    return if (items.isBlank()) "" else "<ul>\n$items\n</ul>"
 }
 
 tasks {
     patchPluginXml {
-        sinceBuild.set("233")
+        // Built and tested against 2025.1 only. Widen this after running
+        // `./gradlew verifyPlugin` against the older builds you want to claim.
+        sinceBuild.set("251")
         untilBuild.set(provider { null })
-        changeNotes.set("""
-            <ul>
-                <li>Version 0.3.0 — Viva-CoTerm:</li>
-                <li>New: Vivado Console tool window (bottom panel) with live bidirectional TCL terminal</li>
-                <li>New: Socket-based TCL bridge — works correctly even after start_gui is called</li>
-                <li>New: 13 predefined TCL commands (buildProject, runSynthesis, programDevice, …)</li>
-                <li>New: Run Command palette in toolbar for parameterized predefined commands</li>
-                <li>New: Embedded MCP server (default port 19999) for Claude Code / Junie AI integration</li>
-                <li>New: Command history (up/down arrow) in TCL input field</li>
-                <li>New: Vivado > Launch Vivado Console right-click action</li>
-                <li>New: MCP settings (port, enable/disable, default jobs, command timeout)</li>
-                <li>Version 0.2.1:</li>
-                <li>Added Vitis support: Open Vitis workspace from folder</li>
-                <li>Added Vitis HLS support: Create HLS Kernel from folder</li>
-            </ul>
-        """.trimIndent())
+        changeNotes.set(provider { latestChangeNotesHtml() })
     }
 
     signPlugin {

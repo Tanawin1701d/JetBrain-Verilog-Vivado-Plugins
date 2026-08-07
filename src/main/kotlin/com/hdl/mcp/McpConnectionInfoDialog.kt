@@ -29,6 +29,7 @@ import javax.swing.UIManager
 class McpConnectionInfoDialog(
     project: Project,
     private val url: String,
+    private val token: String,
     private val rawTclEnabled: Boolean
 ) : DialogWrapper(project, true) {
 
@@ -84,7 +85,10 @@ class McpConnectionInfoDialog(
           "mcpServers": {
             "viva-coterm": {
               "type": "http",
-              "url": "$url"
+              "url": "$url",
+              "headers": {
+                "Authorization": "Bearer $token"
+              }
             }
           }
         }
@@ -107,24 +111,33 @@ class McpConnectionInfoDialog(
 
             <p>Point your AI assistant at this address:</p>
             <p style='margin-left:12px;'><code style='font-size:14px;'><b>$url</b></code></p>
-            <p style='color:gray;'>Loopback only — reachable from this machine.</p>
+
+            <p>and give it this session token:</p>
+            <p style='margin-left:12px;'><code style='font-size:13px;'><b>$token</b></code></p>
+            <p style='color:gray;'>Sent as <code>Authorization: Bearer &lt;token&gt;</code>. The server
+            binds to loopback and additionally refuses any request carrying a browser
+            <code>Origin</code> header, so a web page cannot reach it even on this machine.
+            A new token is minted every time you start the server.</p>
 
             $rawTclNote
 
             <h3>Claude Code</h3>
             <p>Run this in a terminal, in the project you want to use it from:</p>
-            <p style='margin-left:12px;'><code>claude mcp add --transport http viva-coterm $url</code></p>
+            <p style='margin-left:12px;'><code>claude mcp add --transport http viva-coterm $url \\<br>
+            &nbsp;&nbsp;--header "Authorization: Bearer $token"</code></p>
             <p>Or commit it to the project by adding the JSON below to <code>.mcp.json</code>
             in the project root.</p>
 
             <h3>Any other MCP client</h3>
-            <p>Add an <b>HTTP</b> (streamable-HTTP) server pointing at the URL above. Most clients
-            take the same JSON object — use <b>Copy JSON Config</b> below and paste it into:</p>
+            <p>Add an <b>HTTP</b> (streamable-HTTP) server pointing at the URL above, with the
+            <code>Authorization</code> header set. Most clients take the same JSON object — use
+            <b>Copy JSON Config</b> below and paste it into:</p>
             <ul>
               <li><b>Claude Code</b> — <code>.mcp.json</code> in the project root</li>
               <li><b>Claude Desktop</b> — <code>claude_desktop_config.json</code></li>
               <li><b>Codex CLI</b> — <code>~/.codex/config.toml</code>, as a
                   <code>[mcp_servers.viva-coterm]</code> table with <code>url = "$url"</code>
+                  and an <code>Authorization</code> header
                   <span style='color:gray;'>(key names differ between Codex releases — check
                   <code>codex --help</code> if it is not picked up)</span></li>
               <li><b>Junie / AI Assistant</b> — Settings &rarr; Tools &rarr; MCP, add an HTTP server</li>
