@@ -22,6 +22,8 @@ import java.awt.*
 import java.awt.datatransfer.StringSelection
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
+import java.io.File
+import java.time.LocalDateTime
 import javax.swing.*
 import javax.swing.text.*
 
@@ -63,7 +65,7 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
             override fun mouseClicked(e: java.awt.event.MouseEvent) {
                 val url = "http://127.0.0.1:${VivadoSettingsState.getInstance(project).mcpPort}"
                 Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(url), null)
-                appendLine("[VivaCo-Term] MCP URL copied to clipboard: $url", styleInfo)
+                notice("[VivaCo-Term] MCP URL copied to clipboard: $url")
             }
         })
     }
@@ -83,6 +85,19 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
         )
     }
 
+    // ---- Recording ----------------------------------------------------------
+    private val recordDot   = RecordDotIcon()
+    private val btnRecord   = JButton("Record", recordDot)
+    private var blinkTimer: Timer? = null
+    private var blinkOn     = false
+
+    private val recordLabel = JLabel().apply {
+        font = font.deriveFont(Font.BOLD, 11f)
+        foreground = REC_BRIGHT
+        border = JBUI.Borders.emptyRight(6)
+        isVisible = false
+    }
+
     // ---- Toolbar buttons ----------------------------------------------------
     private val btnLaunch  = JButton("Launch Vivado")
     private val btnRestart = JButton("Restart")
@@ -97,6 +112,10 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
         wireActions()
         subscribeToFlows()
         updateMcpLabel()
+        // A recording started before this tool window was reopened is still running — the
+        // recorder lives on the project, not on the panel — so pick its state up rather than
+        // showing an idle button over a live recording.
+        updateRecordUi()
     }
 
     // -------------------------------------------------------------------------
@@ -128,6 +147,7 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
             border = JBUI.Borders.empty(2, 4)
             add(statusLabel, BorderLayout.WEST)
             add(mcpUrlLabel, BorderLayout.CENTER)
+            add(recordLabel, BorderLayout.EAST)
         }
 
         return JPanel(BorderLayout()).apply {
@@ -153,6 +173,8 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
             addSeparator()
             add(btnMcp)
             addSeparator()
+            add(btnRecord)
+            addSeparator()
             add(btnClear)
             addSeparator()
             add(btnCmd)
@@ -172,6 +194,7 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
             VivadoProcessManager.getInstance(project).shutdownVivado()
         }
         btnMcp.addActionListener { toggleMcpServer() }
+        btnRecord.addActionListener { toggleRecording() }
         btnClear.addActionListener {
             try { outputDoc.remove(0, outputDoc.length) } catch (_: Exception) {}
         }
@@ -212,7 +235,7 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
 
         val bridge = TclBridgeService.getInstance(project)
         if (!bridge.isConnected()) {
-            appendLine("[VivaCo-Term] Not connected. Launch Vivado first.", styleError)
+            notice("[VivaCo-Term] ERROR: Not connected. Launch Vivado first.")
             return
         }
         scope.launch {
@@ -316,10 +339,10 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
         val tcl = try {
             cmd.tclGenerator(args)
         } catch (e: Exception) {
-            appendLine("[VivaCo-Term] Parameter error: ${e.message}", styleError)
+            notice("[VivaCo-Term] ERROR: bad parameter — ${e.message}")
             return
         }
-        appendLine("[AI] Executing: ${cmd.name}", styleAi)
+        notice("[AI] Executing: ${cmd.name}")
         scope.launch {
             try {
                 bridge.sendCommand(tcl).await()
@@ -332,6 +355,157 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
                 }
             }
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Session recording
+    // -------------------------------------------------------------------------
+
+    private fun toggleRecording() {
+        val recorder = CoTermRecorder.getInstance(project)
+        if (recorder.isRecording) {
+            val stats = recorder.stats
+            val file = recorder.stop()
+            appendLine(
+                "[VivaCo-Term] Recording stopped — ${stats.total} records " +
+                    "(${stats.sent} sent, ${stats.received} received) written to ${file?.absolutePath}",
+                styleInfo
+            )
+        } else {
+            val target = askRecordTarget() ?: return
+            try {
+                val file = recorder.start(target.file, target.append)
+                // Remember the folder so the next recording defaults next to this one.
+                VivadoSettingsState.getInstance(project).recordLogDir = file.absoluteFile.parent.orEmpty()
+                notice("[VivaCo-Term] Recording to ${file.absolutePath}")
+            } catch (e: Exception) {
+                appendLine("[VivaCo-Term] Cannot record to ${target.file.absolutePath}: ${e.message}", styleError)
+                Messages.showErrorDialog(
+                    project,
+                    "Could not open the log file:\n${target.file.absolutePath}\n\n${e.message}",
+                    "Start Recording"
+                )
+            }
+        }
+        updateRecordUi()
+    }
+
+    private data class RecordTarget(val file: File, val append: Boolean)
+
+    /**
+     * Ask where the log goes. Defaults to the folder used last (or set in HDL Settings), with a
+     * timestamped file name, so repeated recordings never silently land on top of each other.
+     */
+    private fun askRecordTarget(): RecordTarget? {
+        val settings = VivadoSettingsState.getInstance(project)
+        val baseDir = settings.recordLogDir.trim()
+            .ifEmpty { project.basePath ?: System.getProperty("user.home") }
+        val suggested = File(baseDir, SessionLogFormat.defaultFileName(LocalDateTime.now()))
+
+        val pathField = JTextField(suggested.absolutePath, 44)
+        val browse    = JButton("Browse...")
+        val appendBox = JCheckBox("Append if the file already exists", false)
+
+        val panel = JPanel(GridBagLayout())
+        val gbc = GridBagConstraints().apply {
+            insets = JBUI.insets(4)
+            anchor = GridBagConstraints.WEST
+            fill = GridBagConstraints.HORIZONTAL
+        }
+        gbc.gridy = 0; gbc.gridx = 0; panel.add(JLabel("Save log to:"), gbc)
+        gbc.gridx = 1; gbc.weightx = 1.0; panel.add(pathField, gbc)
+        gbc.gridx = 2; gbc.weightx = 0.0; panel.add(browse, gbc)
+        gbc.gridy = 1; gbc.gridx = 1; gbc.gridwidth = 2; panel.add(appendBox, gbc)
+
+        browse.addActionListener {
+            val fc = JFileChooser().apply {
+                dialogTitle = "Save Console Log"
+                selectedFile = File(pathField.text.trim().ifEmpty { suggested.absolutePath })
+                fileFilter = javax.swing.filechooser.FileNameExtensionFilter("Log file", "log", "txt")
+            }
+            if (fc.showSaveDialog(panel) == JFileChooser.APPROVE_OPTION) {
+                pathField.text = fc.selectedFile.absolutePath
+            }
+        }
+
+        val result = JOptionPane.showConfirmDialog(
+            null, panel, "Record Console Session",
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
+        )
+        if (result != JOptionPane.OK_OPTION) return null
+
+        val path = pathField.text.trim()
+        if (path.isEmpty()) {
+            Messages.showErrorDialog(project, "Choose a file to record into.", "Start Recording")
+            return null
+        }
+
+        val file = File(path).absoluteFile
+        if (file.isDirectory) {
+            Messages.showErrorDialog(project, "${file.absolutePath} is a folder, not a file.", "Start Recording")
+            return null
+        }
+        // An existing log is somebody's earlier session — never truncate it without asking.
+        if (file.exists() && !appendBox.isSelected) {
+            val answer = Messages.showYesNoDialog(
+                project,
+                "${file.absolutePath}\nalready exists. Overwrite it?",
+                "Start Recording",
+                "Overwrite", "Cancel",
+                Messages.getWarningIcon()
+            )
+            if (answer != Messages.YES) return null
+        }
+        return RecordTarget(file, appendBox.isSelected)
+    }
+
+    /** Repaint the button, the blinking dot and the status label from the recorder's state. */
+    private fun updateRecordUi() {
+        val recorder = CoTermRecorder.getInstance(project)
+        if (recorder.isRecording) {
+            val file = recorder.targetFile
+            btnRecord.text = "Stop Recording"
+            btnRecord.toolTipText = "Recording this session to ${file?.absolutePath} — click to stop"
+            recordLabel.isVisible = true
+            startBlinking()
+        } else {
+            stopBlinking()
+            btnRecord.text = "Record"
+            btnRecord.toolTipText = "Record everything sent to and received from Vivado to a file"
+            recordDot.color = REC_IDLE
+            btnRecord.repaint()
+            recordLabel.isVisible = false
+        }
+    }
+
+    private fun startBlinking() {
+        if (blinkTimer?.isRunning == true) return
+        blinkOn = true
+        blinkTimer = Timer(BLINK_INTERVAL_MS) { onBlinkTick() }.also { it.start() }
+        onBlinkTick()
+    }
+
+    // One tick drives the dot, the status label and the live record count together, so the two
+    // indicators cannot fall out of step with each other.
+    private fun onBlinkTick() {
+        val lit = blinkOn
+        blinkOn = !blinkOn
+
+        recordDot.color = if (lit) REC_BRIGHT else REC_DARK
+        btnRecord.repaint()
+
+        val recorder = CoTermRecorder.getInstance(project)
+        val file = recorder.targetFile
+        if (file != null) {
+            recordLabel.text = "● REC ${file.name} (${recorder.stats.total})"
+            recordLabel.foreground = if (lit) REC_BRIGHT else REC_DARK
+        }
+    }
+
+    private fun stopBlinking() {
+        blinkTimer?.stop()
+        blinkTimer = null
+        blinkOn = false
     }
 
     // -------------------------------------------------------------------------
@@ -360,7 +534,7 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
         val server = VivaMcpServer.getInstance(project)
         if (server.isRunning) {
             server.stop()
-            appendLine("[VivaCo-Term] MCP server stopped.", styleInfo)
+            notice("[VivaCo-Term] MCP server stopped.")
         } else {
             val dialog = McpStartAgreementDialog(project)
             dialog.showAndGet()   // exit code is reflected in dialog.choice
@@ -371,8 +545,11 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
             }
             val port = VivadoSettingsState.getInstance(project).mcpPort
             val mode = if (server.rawTclAllowed) "raw Tcl ENABLED" else "raw Tcl disabled"
-            appendLine("[VivaCo-Term] MCP server started on http://127.0.0.1:$port ($mode).", styleInfo)
+            notice("[VivaCo-Term] MCP server started on http://127.0.0.1:$port ($mode).")
+            // The token is a live credential and session logs get shared, so it is shown in the
+            // console only — the log gets a note that one was issued, not the value.
             appendLine("[VivaCo-Term] MCP token: ${server.sessionToken}", styleInfo)
+            notice("[VivaCo-Term] MCP session token issued (kept out of the log).")
 
             // The server is listening, but the user still has to point a client at it —
             // show how, with the URL and a copyable config.
@@ -393,7 +570,7 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
         val status = VivadoProcessManager.getInstance(project).statusFlow.value
         if (status == VivadoStatus.RUNNING) return
 
-        appendLine("[VivaCo-Term] Vivado is not running — MCP tools will fail until it is launched.", styleWarn)
+        notice("[VivaCo-Term] WARNING: Vivado is not running — MCP tools will fail until it is launched.")
         val answer = Messages.showYesNoDialog(
             project,
             "The MCP server is started, but Vivado is not running yet.\n" +
@@ -449,6 +626,18 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
     // Output helpers
     // -------------------------------------------------------------------------
 
+    /**
+     * Print a console notice through the bridge instead of straight into the text pane.
+     *
+     * The panel renders it when it comes back on the output flow — once — and because it made
+     * the round trip it also lands in a running session log. Anything written with [appendLine]
+     * instead is console-only, on purpose: the `tcl>` echo (already logged as a sent record),
+     * the MCP token, and messages about the recording itself.
+     */
+    private fun notice(text: String) {
+        TclBridgeService.getInstance(project).publishInfo(text)
+    }
+
     private fun appendLine(text: String, style: AttributeSet) {
         try {
             val line = if (text.endsWith("\n")) text else "$text\n"
@@ -457,12 +646,14 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
         } catch (_: BadLocationException) {}
     }
 
+    // Severity is checked before the source prefix: a "[VivaCo-Term] ERROR: ..." notice has to
+    // read as an error, not as ordinary plugin chatter.
     private fun pickStyle(line: String): AttributeSet = when {
-        line.startsWith("[AI]")                       -> styleAi
-        line.startsWith("[VivaCo-Term]")              -> styleInfo
         line.contains("ERROR:", ignoreCase = true) ||
             line.contains("CRITICAL WARNING:", ignoreCase = true) -> styleError
         line.contains("WARNING:", ignoreCase = true)  -> styleWarn
+        line.startsWith("[AI]")                       -> styleAi
+        line.startsWith("[VivaCo-Term]")              -> styleInfo
         else                                          -> styleNormal
     }
 
@@ -473,6 +664,42 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
     }
 
     override fun dispose() {
+        // Only the blink stops here. The recording itself belongs to the project, so closing the
+        // tool window must not cut a session log short.
+        stopBlinking()
         scope.cancel()
+    }
+
+    /**
+     * The record indicator: a filled circle whose colour the blink timer swaps.
+     *
+     * A repainted icon rather than two swapped image assets, so the dot follows the button's
+     * font size and stays crisp on a HiDPI screen.
+     */
+    private class RecordDotIcon(private val size: Int = JBUI.scale(10)) : Icon {
+
+        var color: Color = REC_IDLE
+
+        override fun getIconWidth()  = size
+        override fun getIconHeight() = size
+
+        override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+            val g2 = g.create() as Graphics2D
+            try {
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+                g2.color = color
+                g2.fillOval(x, y, size, size)
+            } finally {
+                g2.dispose()
+            }
+        }
+    }
+
+    companion object {
+        private const val BLINK_INTERVAL_MS = 500
+
+        private val REC_BRIGHT = Color(235, 70, 70)    // dot lit — recording
+        private val REC_DARK   = Color(110, 45, 45)    // dot dimmed — the off half of the blink
+        private val REC_IDLE   = Color(120, 90, 90)    // not recording
     }
 }

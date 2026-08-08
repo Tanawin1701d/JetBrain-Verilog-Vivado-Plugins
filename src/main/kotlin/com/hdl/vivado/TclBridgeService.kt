@@ -14,6 +14,7 @@ import java.io.PrintWriter
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Manages the bidirectional TCP socket bridge between the IDE and the live Vivado process.
@@ -39,6 +40,9 @@ class TclBridgeService(private val project: Project) : Disposable {
     )
     val outputFlow: SharedFlow<String> = _outputFlow.asSharedFlow()
 
+    /** Two-way traffic taps — see [TrafficListener]. Empty unless something is recording. */
+    private val trafficListeners = CopyOnWriteArrayList<TrafficListener>()
+
     private data class QueuedCommand(
         val tcl: String,
         val deferred: CompletableDeferred<String>
@@ -62,10 +66,10 @@ class TclBridgeService(private val project: Project) : Disposable {
                 // Consume the handshake line (%%CONNECTED%%)
                 withContext(Dispatchers.IO) { reader!!.readLine() }
 
-                emit("[VivaCo-Term] Bridge connected")
+                emitInfo("[VivaCo-Term] Bridge connected")
                 launch { processCommandLoop() }
             } catch (e: Exception) {
-                if (scope.isActive) emit("[VivaCo-Term] Bridge accept error: ${e.message}")
+                if (scope.isActive) emitInfo("[VivaCo-Term] Bridge accept error: ${e.message}")
             }
         }
 
@@ -79,9 +83,36 @@ class TclBridgeService(private val project: Project) : Disposable {
         return deferred
     }
 
-    /** Publish a line directly to the output flow (e.g. process stdout). */
+    /**
+     * Publish a line that came back from Vivado (e.g. process stdout) to the output flow.
+     *
+     * Delivered on the caller's thread rather than through `scope.launch`: one coroutine per
+     * line gives no ordering guarantee between lines, which shuffles both the console and the
+     * recorded log. `tryEmit` cannot fail here — the flow has spare buffer and drops its oldest
+     * entry when full — so nothing is lost by not suspending.
+     */
     fun publishOutput(line: String) {
-        scope.launch { _outputFlow.emit(line) }
+        _outputFlow.tryEmit(line)
+        notifyTraffic(TrafficDirection.RECEIVED, line)
+    }
+
+    /**
+     * Publish a plugin-generated notice — a status message the console shows but that never
+     * travelled over the socket. Kept apart from [publishOutput] so a recording can tell the
+     * two apart instead of passing our own chatter off as Vivado output.
+     */
+    fun publishInfo(line: String) {
+        _outputFlow.tryEmit(line)
+        notifyTraffic(TrafficDirection.INFO, line)
+    }
+
+    /** Register a tap on the two-way traffic. Remove it with [removeTrafficListener] when done. */
+    fun addTrafficListener(listener: TrafficListener) {
+        trafficListeners.addIfAbsent(listener)
+    }
+
+    fun removeTrafficListener(listener: TrafficListener) {
+        trafficListeners.remove(listener)
     }
 
     fun isConnected(): Boolean =
@@ -95,7 +126,29 @@ class TclBridgeService(private val project: Project) : Disposable {
         clientSocket = null
     }
 
-    private suspend fun emit(line: String) = _outputFlow.emit(line)
+    private suspend fun emitReceived(line: String) {
+        _outputFlow.emit(line)
+        notifyTraffic(TrafficDirection.RECEIVED, line)
+    }
+
+    private suspend fun emitInfo(line: String) {
+        _outputFlow.emit(line)
+        notifyTraffic(TrafficDirection.INFO, line)
+    }
+
+    /**
+     * Hand an event to every tap. Timestamped here, at the moment the data crosses, so a slow
+     * listener cannot skew the log. A throwing listener is ignored — the bridge keeps running.
+     */
+    private fun notifyTraffic(direction: TrafficDirection, text: String) {
+        if (trafficListeners.isEmpty()) return
+        val event = TrafficEvent(direction, text, System.currentTimeMillis())
+        for (listener in trafficListeners) {
+            try {
+                listener.onTraffic(event)
+            } catch (_: Exception) { /* a broken tap must never take the session down */ }
+        }
+    }
 
     private suspend fun processCommandLoop() {
         val settings = VivadoSettingsState.getInstance(project)
@@ -115,7 +168,7 @@ class TclBridgeService(private val project: Project) : Disposable {
                 queued.deferred.complete(output)
             } catch (e: TimeoutCancellationException) {
                 val msg = "Command timed out after ${settings.cmdTimeoutMin} min"
-                emit("[VivaCo-Term] $msg")
+                emitInfo("[VivaCo-Term] $msg")
                 queued.deferred.completeExceptionally(e)
             } catch (e: Exception) {
                 queued.deferred.completeExceptionally(e)
@@ -132,6 +185,10 @@ class TclBridgeService(private val project: Project) : Disposable {
      *   ← "OUT:<line>" or "ERR:<line>" until "%%PROMPT%%"
      */
     private suspend fun sendRaw(tcl: String, w: PrintWriter, r: BufferedReader): String {
+        // Announced here rather than in sendCommand: this is the point the command leaves for
+        // Vivado, so a recording shows the queue order the session actually executed in.
+        notifyTraffic(TrafficDirection.SENT, tcl)
+
         withContext(Dispatchers.IO) {
             for (line in tcl.lines()) w.println(line)
             w.println("%%SEND%%")
@@ -148,17 +205,17 @@ class TclBridgeService(private val project: Project) : Disposable {
                 line == "%%PROMPT%%" -> break
                 line.startsWith("OUT:") -> {
                     val content = line.removePrefix("OUT:")
-                    emit(content)
+                    emitReceived(content)
                     sb.appendLine(content)
                 }
                 line.startsWith("ERR:") -> {
                     val content = line.removePrefix("ERR:")
-                    emit("ERROR: $content")
+                    emitReceived("ERROR: $content")
                     sb.appendLine(content)
                     hasError = true
                 }
                 else -> {
-                    emit(line)
+                    emitReceived(line)
                     sb.appendLine(line)
                 }
             }

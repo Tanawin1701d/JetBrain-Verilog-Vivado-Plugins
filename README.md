@@ -5,7 +5,7 @@ or any MCP client — from inside IntelliJ IDEA. Plus the things you'd want anyw
 Verilog and SystemVerilog language support, cross-module linting, and a Tcl terminal
 attached to the running session.
 
-**Version 1.0.0** · IntelliJ IDEA 2025.1+ · [Changelog](CHANGELOG.md)
+**Version 1.0.1** · IntelliJ IDEA 2025.1+ · [Changelog](CHANGELOG.md)
 
 ---
 
@@ -20,6 +20,7 @@ attached to the running session.
 | **Vivado** | Build a project from a folder, open an existing `.xpr`, run Tcl/XDC scripts (`Ctrl+Alt+R`), package IP through IP Composer. |
 | **Vitis** | Open a Vitis workspace, create a Vitis HLS kernel. |
 | **Vivado Console** | A bidirectional Tcl terminal on a live session. Runs over a socket rather than stdin, so the Vivado GUI stays usable while you type. 27 commands in a toolbar palette. |
+| **Session recording** | Record everything sent to and received from Vivado — yours and the assistant's — to a log file you choose. [Details](#recording-a-session) |
 
 ## Install
 
@@ -79,6 +80,45 @@ Any other client takes the same shape:
 > **The assistant runs commands with your privileges.** These locks decide *who* may issue a
 > command, not whether the command is a good idea. Watch the console and keep backups.
 
+## Recording a session
+
+**Record** in the Vivado Console toolbar writes the whole conversation with Vivado to a file:
+every command sent and every line received, from the moment you press it until you press it
+again. A red dot blinks on the button while it runs, and the status bar shows the file name and
+a live record count.
+
+You pick the file when you start — the dialog offers a timestamped name in the folder you used
+last, with an append option and an overwrite prompt. Set the starting folder in
+Settings → Tools → **HDL Settings** → *Console Log Folder*.
+
+The tap sits on the Tcl bridge rather than on the console panel, which means two things: it
+records the commands an MCP client issues as well as the ones you type — the audit trail for a
+session you let an assistant drive — and the recording keeps going if you close the tool window.
+
+Everything the console prints goes into the log, including its own notices (`[AI] Executing: ...`,
+MCP start/stop, parameter errors). Two deliberate exceptions: the `tcl>` echo, which is already
+there as a sent record, and the MCP session token — it is a live credential and logs get shared,
+so the log notes only that one was issued.
+
+```
+# VivaCo-Term console log
+# project : blink
+# started : 2026-08-08 14:23:01
+# legend  : >> sent to Vivado   << received from Vivado   -- plugin notice
+#
+[2026-08-08 14:23:05.120] >> open_project {/home/me/blink/blink.xpr}
+[2026-08-08 14:23:06.001] << INFO: [Common 17-206] Opening project...
+[2026-08-08 14:23:06.010] -- [VivaCo-Term] Bridge active. Type TCL commands below.
+#
+# stopped : 2026-08-08 14:40:11
+# records : 214 (sent 12, received 198, notices 4)
+```
+
+One record per line, so `grep '>>' session.log` gives you the commands that ran, in order. Each
+carries a full date and time to the millisecond, stamped when the data crossed the bridge rather
+than when it reached the disk — so the log keeps the real timing even when Vivado dumps output in
+bursts, and long runs stay readable across midnight.
+
 ## Building and testing
 
 ```bash
@@ -89,7 +129,7 @@ Any other client takes the same shape:
 ```
 
 The suite covers the MCP access gate, the JSON layer, tool-schema generation, all 27 commands,
-Verilog tokenisation, and the launcher's working-directory layout. Anything needing a real IDE,
+Verilog tokenisation, the session-log format, and the launcher's working-directory layout. Anything needing a real IDE,
 linter, or Vivado is a manual checklist in [`test_files/README.md`](test_files/README.md);
 the AI path has its own in [`test_files/mcp/README.md`](test_files/mcp/README.md).
 
@@ -100,7 +140,7 @@ src/main/kotlin/com/hdl/
 ├── verilog/     Language support + the linter framework
 ├── tcl/         Tcl and XDC language support
 ├── vivado/      Process launching, settings, the Tcl bridge, the command library
-├── coterm/      Vivado Console tool window
+├── coterm/      Vivado Console tool window and the session recorder
 ├── mcp/         MCP server, access control, JSON, tool schemas
 └── settings/    HDL Settings UI and tutorial
 ```

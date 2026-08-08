@@ -24,6 +24,9 @@
             typing in the same session while the assistant works. Off by default.</li>
         <li><b>Vivado Console</b> &mdash; a live Tcl terminal on a running session; the Vivado GUI
             stays usable while you type.</li>
+        <li><b>Session recording</b> &mdash; one button writes everything sent to and received from
+            Vivado into a log file of your choosing, yours and the assistant's alike, with a
+            blinking red dot while it runs.</li>
         <li><b>Verilog &amp; SystemVerilog</b> &mdash; highlighting, completion, commenting, and
             <code>module</code>/<code>endmodule</code>-aware brace matching.</li>
         <li><b>Tcl &amp; XDC</b> &mdash; highlighting, folding, <code>${var}</code> handling, and
@@ -84,6 +87,13 @@
     attached to a live Vivado session. Because it talks over a socket rather than stdin, the Vivado
     GUI stays fully usable while you work. 27 parameterised commands are available from a toolbar
     palette, with command history on the up/down arrows.</p>
+
+    <p><b>Record the session.</b> Press Record, choose where the file goes, and every command and
+    every line of output from that point on is written to it &mdash; each record timestamped and
+    marked by direction, so you can hand the log to a colleague or grep it for the commands that
+    ran. It captures what an AI assistant sends too, not just what you type, which makes it the
+    audit trail for a session you let an assistant drive. A red dot blinks on the button while
+    recording, and the recording keeps going if you close the tool window.</p>
 
     <h3>Language support</h3>
     <ul>

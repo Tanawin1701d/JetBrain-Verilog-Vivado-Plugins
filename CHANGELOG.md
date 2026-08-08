@@ -3,6 +3,28 @@
 The top section of this file is rendered into the Marketplace change notes by
 `build.gradle.kts` — keep the newest release first, and keep entries as `- ` bullets.
 
+## 1.0.1 — Record a console session to a file
+
+**Session recording**
+
+- New: Record button in the Vivado Console toolbar, writing everything sent to and received from Vivado into a log file
+- New: the button carries a blinking red dot while a recording is running, with the file name and a live record count in the console status bar
+- New: you pick the file each time you start, with an append option and an overwrite prompt; the folder is remembered for the next recording
+- New: `Console Log Folder` setting under Viva-CoTerm / MCP Server, for where the Record button starts from
+- New: recordings cover the commands an MCP client issues as well as the ones you type, because the tap sits on the Tcl bridge itself
+- New: the console's own notices are recorded too — `[AI] Executing: ...`, MCP start/stop, parameter errors and connection warnings all land in the log alongside the traffic
+- New: logs are line-oriented and marked by direction — sent, received, or plugin notice — with a header, a full date-and-time stamp to the millisecond on every record, and a closing count
+- New: records are stamped at the moment the data crosses the bridge, not when it reaches the disk, so the log keeps the real timing even while output arrives in bursts
+- New: recording is owned by the project, so closing the Vivado Console tool window no longer cuts a session log short
+- New: the MCP session token is deliberately kept out of the log, which records only that one was issued
+- Changed: plugin status lines are published separately from Vivado output, so a recording no longer files our own notices as session output
+- Changed: published console lines are delivered in order; one coroutine per line guaranteed nothing about ordering, in the console or in the log
+- Changed: severity now outranks the source prefix when colouring the console, so a `[VivaCo-Term] ERROR: ...` notice reads as an error rather than as ordinary chatter
+
+**Quality**
+
+- Added: 18 unit tests covering the log format, multi-line commands, append vs overwrite, folder creation, a write racing a stop, and the bridge taps that carry notices into the log
+
 ## 1.0.0 — Vivado Console and AI assistant support
 
 The Viva-CoTerm work that was developed as 0.3.0 never shipped, so it arrives here

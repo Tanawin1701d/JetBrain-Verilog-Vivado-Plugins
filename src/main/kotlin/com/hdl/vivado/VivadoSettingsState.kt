@@ -19,7 +19,9 @@ class VivadoSettingsState : PersistentStateComponent<VivadoSettingsState.State> 
         var ipRepoPath: String = "",
         var mcpPort: Int = 19999,
         var defaultJobs: Int = 4,
-        var cmdTimeoutMin: Int = 10
+        var cmdTimeoutMin: Int = 10,
+        /** Where the console's Record button offers to save a session log. Empty = project root. */
+        var recordLogDir: String = ""
     )
 
     private var myState = State()
@@ -70,6 +72,12 @@ class VivadoSettingsState : PersistentStateComponent<VivadoSettingsState.State> 
         get() = myState.cmdTimeoutMin
         set(value) {
             myState.cmdTimeoutMin = value
+        }
+
+    var recordLogDir: String
+        get() = myState.recordLogDir
+        set(value) {
+            myState.recordLogDir = value
         }
 
     override fun getState(): State = myState

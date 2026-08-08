@@ -220,7 +220,7 @@ class VivaMcpServer(private val project: Project) : Disposable {
 
         // Echo the AI-issued command into the CoTerm panel (first line only, "..." if multi-line).
         val bridge = TclBridgeService.getInstance(project)
-        bridge.publishOutput("[AI] $toolName: ${tcl.lines().first()}${if (tcl.lines().size > 1) "..." else ""}")
+        bridge.publishInfo("[AI] $toolName: ${tcl.lines().first()}${if (tcl.lines().size > 1) "..." else ""}")
 
         // Block this pool thread on the bridge's serialized queue until Vivado returns the output.
         val output = try {

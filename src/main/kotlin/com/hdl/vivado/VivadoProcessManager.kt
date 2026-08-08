@@ -87,13 +87,13 @@ class VivadoProcessManager(private val project: Project) : Disposable {
 
         // Step 2: guard — if the Vivado binary doesn't exist, fail fast and tell the user
         if (!File(settings.vivadoPath).exists()) {
-            bridge.publishOutput("[VivaCo-Term] ERROR: Vivado not found at '${settings.vivadoPath}'. Configure path in HDL Settings.")
+            bridge.publishInfo("[VivaCo-Term] ERROR: Vivado not found at '${settings.vivadoPath}'. Configure path in HDL Settings.")
             return
         }
 
         // Step 3: open the TCP bridge server first so the port is ready before Vivado starts
         _statusFlow.value = VivadoStatus.STARTING
-        bridge.publishOutput("[VivaCo-Term] Starting Vivado...")
+        bridge.publishInfo("[VivaCo-Term] Starting Vivado...")
         val bridgePort = bridge.startBridgeServer()  // ServerSocket on a random port; Vivado will connect back to this
 
         // Step 4: write the auto-generated startup TCL to a temp file
@@ -132,7 +132,7 @@ class VivadoProcessManager(private val project: Project) : Disposable {
                     bridge.publishOutput(ln)
                     if (ln.contains("VIVACOTERM_CONNECTED")) {
                         _statusFlow.value = VivadoStatus.RUNNING
-                        bridge.publishOutput("[VivaCo-Term] Bridge active. Type TCL commands below.")
+                        bridge.publishInfo("[VivaCo-Term] Bridge active. Type TCL commands below.")
                     }
                 }
             } catch (_: Exception) { /* stream closed when process dies — nothing to do */ }
@@ -145,7 +145,7 @@ class VivadoProcessManager(private val project: Project) : Disposable {
             val wasRunning = _statusFlow.value == VivadoStatus.RUNNING
             _statusFlow.value = if (proc.exitValue() == 0) VivadoStatus.STOPPED else VivadoStatus.CRASHED
             bridge.disconnect()
-            bridge.publishOutput(
+            bridge.publishInfo(
                 if (proc.exitValue() == 0) "[VivaCo-Term] Vivado session ended."
                 else "[VivaCo-Term] Vivado exited with code ${proc.exitValue()}."
             )

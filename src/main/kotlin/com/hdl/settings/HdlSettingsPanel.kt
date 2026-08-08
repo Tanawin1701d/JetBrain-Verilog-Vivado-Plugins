@@ -47,6 +47,7 @@ class HdlSettingsPanel(
     private val mcpPortSpinner     = JSpinner(SpinnerNumberModel(19999, 1024, 65535, 1))
     private val defaultJobsSpinner = JSpinner(SpinnerNumberModel(4, 1, 128, 1))
     private val cmdTimeoutSpinner  = JSpinner(SpinnerNumberModel(10, 1, 120, 1))
+    private val recordLogDirField  = TextFieldWithBrowseButton()
 
     // -------------------------------------------------------------------------
     // Linter fields
@@ -123,7 +124,8 @@ class HdlSettingsPanel(
                verilatorPathField.text != ls.verilatorPath      ||
                (mcpPortSpinner.value as Int)    != vs.mcpPort   ||
                (defaultJobsSpinner.value as Int) != vs.defaultJobs ||
-               (cmdTimeoutSpinner.value as Int)  != vs.cmdTimeoutMin
+               (cmdTimeoutSpinner.value as Int)  != vs.cmdTimeoutMin ||
+               recordLogDirField.text  != vs.recordLogDir
     }
 
     fun applyToState() {
@@ -144,6 +146,7 @@ class HdlSettingsPanel(
         vs.mcpPort       = mcpPortSpinner.value as Int
         vs.defaultJobs   = defaultJobsSpinner.value as Int
         vs.cmdTimeoutMin = cmdTimeoutSpinner.value as Int
+        vs.recordLogDir  = recordLogDirField.text.trim()
 
         val previousTopFolder = ls.topFolder
         val newTopFolder = topFolderField.text.trim().ifEmpty { null }
@@ -178,6 +181,7 @@ class HdlSettingsPanel(
         mcpPortSpinner.value    = vs.mcpPort
         defaultJobsSpinner.value = vs.defaultJobs
         cmdTimeoutSpinner.value  = vs.cmdTimeoutMin
+        recordLogDirField.text   = vs.recordLogDir
 
         topFolderField.text     = ls.topFolder.orEmpty()
 
@@ -230,6 +234,9 @@ class HdlSettingsPanel(
 
         verilatorPathField.addBrowseFolderListener("Select Verilator Executable", null, project,
             FileChooserDescriptorFactory.createSingleFileDescriptor())
+
+        recordLogDirField.addBrowseFolderListener("Select Console Log Folder", null, project,
+            FileChooserDescriptorFactory.createSingleFolderDescriptor())
     }
 
     // -------------------------------------------------------------------------
@@ -289,6 +296,7 @@ class HdlSettingsPanel(
         topFolderField.textField.document.addDocumentListener(dl)
         iverilogPathField.textField.document.addDocumentListener(dl)
         verilatorPathField.textField.document.addDocumentListener(dl)
+        recordLogDirField.textField.document.addDocumentListener(dl)
         linterTypeComboBox.addItemListener { onFieldChanged() }
         mcpPortSpinner.addChangeListener    { onFieldChanged() }
         defaultJobsSpinner.addChangeListener { onFieldChanged() }
@@ -389,6 +397,11 @@ class HdlSettingsPanel(
             })
             .addLabeledComponent(JBLabel("Default Build Jobs:"), defaultJobsSpinner, 1, false)
             .addLabeledComponent(JBLabel("Cmd Timeout (min):"),  cmdTimeoutSpinner,  1, false)
+            .addLabeledComponent(JBLabel("Console Log Folder:"), recordLogDirField,  1, false)
+            .addComponentToRightColumn(JBLabel("Where the console's Record button saves session logs. Blank = project root.").apply {
+                font = font.deriveFont(Font.ITALIC, 11f)
+                foreground = Color.GRAY
+            })
 
         if (showActionButtons) {
             builder
