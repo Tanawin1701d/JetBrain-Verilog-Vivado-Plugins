@@ -28,7 +28,7 @@ tests cannot: that the generated Tcl is actually valid Vivado Tcl.**
 | # | Call | Expected |
 |---|------|----------|
 | 1.1 | `initialize` | `protocolVersion: "2024-11-05"`, `serverInfo.name: "VivaCo-Term MCP"` |
-| 1.2 | `tools/list` | **25** tools when started Safe; **27** when started with raw Tcl |
+| 1.2 | `tools/list` | **28** tools when started Safe; **30** when started with raw Tcl |
 | 1.3 | `tools/list` (Safe) | `runTclRaw` and `runTclScript` are **absent**, not merely erroring |
 | 1.4 | `ping` | empty result, no error |
 | 1.5 | unknown method `foo/bar` | JSON-RPC error `-32601` |
@@ -102,7 +102,7 @@ Needs a Zynq/ZynqMP part. Substitute your own part and cell VLNVs.
 
 | # | Call | Expected |
 |---|------|----------|
-| 5.1 | `tools/list` | now **27** tools; `runTclRaw` and `runTclScript` present |
+| 5.1 | `tools/list` | now **30** tools; `runTclRaw` and `runTclScript` present |
 | 5.2 | `runTclRaw` with `tclString: "puts hello"` | output `hello` |
 | 5.3 | `runTclRaw` with a path containing backslashes | path arrives intact — see below |
 | 5.4 | Stop MCP, restart **Safe**, call `runTclRaw` | refused again; permission does not persist |
@@ -130,7 +130,34 @@ Also try a Vivado property string, which mixes braces and backslashes:
 The braces must survive — `McpJson.objectField` skips string literals while
 counting brace depth precisely so this does not truncate.
 
-## §6 — Serialisation
+## §6 — The UG835 catalogue gateway
+
+Run §6.1–6.3 with the MCP server started **Safe** (raw Tcl off) and, for 6.1
+and 6.2, with **Vivado stopped** — the catalogue is answered inside the plugin,
+so it must not be blocked by the `Vivado is not running` guard.
+
+| # | Call | Expected |
+|---|------|----------|
+| 6.1 | `searchVivadoCommands` `{"query": "pblock"}`, Vivado **stopped** | `create_pblock`, `resize_pblock`, … — **not** `Vivado is not running` |
+| 6.2 | `describeVivadoCommand` `{"name": "create_clock"}`, Vivado **stopped** | syntax plus the `-period / -name / -waveform / -add / <objects>` table |
+| 6.3 | `describeVivadoCommand` `{"name": "wait_on_run"}` | not found, and suggests `wait_on_runs` |
+| 6.4 | `searchVivadoCommands` `{"query": "tiles"}` | no `get_tiles` — tier-3 commands stay out of an ordinary search |
+| 6.5 | same with `{"scope": "all"}` | `get_tiles` now present |
+| 6.6 | `runVivadoCommand` `{"command": "report_utilization"}`, Vivado **running** | the utilisation report, and an `[AI] runVivadoCommand:` echo in the console |
+| 6.7 | `runVivadoCommand` `{"command": "exec", "args": "ls"}` | `isError: true`, not in the UG835 reference |
+| 6.8 | `runVivadoCommand` `{"command": "create_clock", "args": "-period 10; close_project"}` | `isError: true`, `';' is not allowed` — and the project is still open |
+| 6.9 | `runVivadoCommand` `{"command": "create_clock", "args": "[exec ls]"}` | `isError: true`, only read-only queries may be substituted |
+
+> **6.7–6.9 are the security cases.** `runVivadoCommand` is deliberately *not*
+> behind the raw-Tcl gate, so the whitelist and `TclArgSanitizer` are the only
+> things standing between an argument string and a second Tcl command. If any of
+> these three succeeds, stop and fix it before shipping.
+
+Then check the human path: **Run Command ▼ → Browse Vivado Commands…**, type
+`report_timing`, confirm the detail pane fills, and press **Insert into Console** —
+the command name lands in the input field without running.
+
+## §7 — Serialisation
 
 With Vivado running, issue `runSynthesis` from your MCP client and, while it is
 still going, type `puts alive` into the Vivado Console input field.

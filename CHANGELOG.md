@@ -3,7 +3,21 @@
 The top section of this file is rendered into the Marketplace change notes by
 `build.gradle.kts` — keep the newest release first, and keep entries as `- ` bullets.
 
-## 1.0.1 — Record a console session to a file
+## 1.0.1 — The whole Vivado Tcl reference, and console session recording
+
+**The Vivado command catalogue**
+
+- New: every command in the *Vivado Design Suite Tcl Command Reference* (UG835) — 771 of them, with syntax, argument tables and examples — is now reachable from an AI assistant and from the console
+- New: `searchVivadoCommands` searches the reference by keyword, category or command name
+- New: `describeVivadoCommand` returns the full reference entry for one command
+- New: `runVivadoCommand` executes any documented command, with the name checked against the reference and the arguments validated
+- New: `runVivadoCommand` stays available with raw Tcl disabled — it is not raw Tcl: no `;`, no line breaks, no `$` or backslashes, and `[...]` substitution is limited to read-only queries
+- New: **Run Command ▼ → Browse Vivado Commands…** opens a searchable browser over the same catalogue and drops the command you pick into the console input
+- New: search results are tiered so flow commands rank ahead of device and GUI accessors; the tiers are plain text files under `src/main/resources/vivado/` that you can edit
+- New: `tools/extract_ug835.py` regenerates the catalogue from a newer UG835 without disturbing the curated tiers
+- Changed: the tool list stays at 30 entries — the 771 commands are shipped as data, because rendering them as tools would cost an assistant roughly 37k tokens on a single `tools/list` call
+- Changed: catalogue lookups are answered inside the plugin, so an assistant can browse the reference before Vivado is launched
+- Changed: the connection dialog counts tools from the library instead of quoting a fixed number
 
 **Session recording**
 

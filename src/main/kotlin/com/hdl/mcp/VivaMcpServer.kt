@@ -183,15 +183,6 @@ class VivaMcpServer(private val project: Project) : Disposable {
             return
         }
 
-        // Guard: refuse to run TCL unless a live Vivado session is up (checked via statusFlow).
-        val manager = VivadoProcessManager.getInstance(project)
-        if (manager.statusFlow.value != VivadoStatus.RUNNING) {
-            sendResponse(ex, 200, toolCallResult(id,
-                "Vivado is not running. Please launch Vivado from the Vivado Console panel first.",
-                isError = true))
-            return
-        }
-
         val argsJson = McpJson.objectField(params, "arguments") ?: "{}"   // absent arguments → empty object
         val args = McpJson.flatObject(argsJson).toMutableMap<String, Any>()  // mutable so defaults can be injected
 
@@ -208,6 +199,35 @@ class VivaMcpServer(private val project: Project) : Disposable {
         // Apply defaults for optional parameters
         for (param in command.parameters.filter { !it.required && it.default != null }) {
             if (!args.containsKey(param.name)) args[param.name] = param.default!!
+        }
+
+        // Catalogue lookups are answered from plugin data, so they short-circuit ahead of the
+        // Vivado-is-running guard: the client can browse the command reference and work out
+        // what it needs before anyone launches Vivado.
+        val localHandler = command.localHandler
+        if (localHandler != null) {
+            // Best-effort echo — the CoTerm panel may have no session behind it yet.
+            try {
+                TclBridgeService.getInstance(project).publishInfo("[AI] $toolName")
+            } catch (_: Exception) {}
+
+            val answer = try {
+                localHandler(args)
+            } catch (e: Exception) {
+                sendResponse(ex, 200, toolCallResult(id, "Parameter error: ${e.message}", isError = true))
+                return
+            }
+            sendResponse(ex, 200, toolCallResult(id, answer, isError = false))
+            return
+        }
+
+        // Guard: refuse to run TCL unless a live Vivado session is up (checked via statusFlow).
+        val manager = VivadoProcessManager.getInstance(project)
+        if (manager.statusFlow.value != VivadoStatus.RUNNING) {
+            sendResponse(ex, 200, toolCallResult(id,
+                "Vivado is not running. Please launch Vivado from the Vivado Console panel first.",
+                isError = true))
+            return
         }
 
         // Render the final TCL string; generator may throw on bad parameter values.

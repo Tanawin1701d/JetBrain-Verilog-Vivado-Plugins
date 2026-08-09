@@ -72,5 +72,12 @@ test_files/**/hs_err_pid*.log
 test_files/.idea/
 *viva_ip_exec
 *viva_prj_exec
+
+### Vendor documentation ###
+# UG835 is a 36 MB AMD PDF and is only an input to tools/extract_ug835.py — the
+# generated catalogue under src/main/resources/vivado/ is what ships. Download it
+# yourself if you need to regenerate.
+UG835.pdf
+docs/*.pdf
 # Local Vivado part/board selection is per-developer.
 .idea/vivadoSettings.xml

@@ -134,4 +134,15 @@ class McpSchemaTest {
             assertTrue(!json.contains(""""name":"$id""""), "gated tool $id leaked into tools/list")
         }
     }
+
+    @Test
+    fun `the whole catalogue stays small enough to sit in a model's context`() {
+        // The reason the ~771 UG835 commands are data behind searchVivadoCommands rather than
+        // tools: rendered as tool descriptors they would be roughly 150 KB. A regression here
+        // means someone started projecting the reference into tools/list.
+        val json = McpSchema.toolsList(PredefinedCommandLibrary.commands)
+        assertTrue(json.length < 20_000, "tools/list is ${json.length} chars — far past a curated tool set")
+        assertTrue(PredefinedCommandLibrary.commands.size < 60,
+            "${PredefinedCommandLibrary.commands.size} tools; the catalogue belongs behind the gateway tools")
+    }
 }

@@ -1,0 +1,41 @@
+# Tier 2 (EXTENDED) -- "good to know": worth surfacing in an ordinary search, but not
+# core flow commands.
+#
+# Membership is by UG835 category, one category name per line, matched against the
+# "categories" column of ug835-index.tsv. A bare command name is also accepted for
+# one-off promotions (see the bottom of this file).
+#
+# Anything not in ug835-tier-core.txt and not matched here falls to Tier 3 (REST):
+# reachable by exact name or with scope=all, never returned by an ordinary search.
+# That is deliberate -- the excluded categories are dominated by object accessors
+# (Object: 153 commands, Hardware: 137, XDC-only: 51 device getters like get_bels /
+# get_sites / get_tiles) and by GUI, waveform and simulator-internal commands, which
+# would otherwise crowd out the flow commands in every result set.
+#
+# Current split: CORE 112 / EXTENDED 336 / REST 322.
+
+# --- category promotions ---
+Project
+Run
+Report
+IPIntegrator
+IPFlow
+Timing
+FileIO
+Netlist
+SDC
+PropertyAndParameter
+Board
+Floorplan
+DRC
+Debug
+Methodology
+synthesis
+simulation
+CreatePeripheral
+Waiver
+Partition
+
+# --- individual command promotions (bare names, no category) ---
+# e.g. a REST command you keep reaching for:
+# get_msg_config

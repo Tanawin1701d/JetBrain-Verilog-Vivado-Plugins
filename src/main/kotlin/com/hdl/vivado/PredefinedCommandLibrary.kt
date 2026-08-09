@@ -1,5 +1,8 @@
 package com.hdl.vivado
 
+import com.hdl.vivado.catalog.TclArgSanitizer
+import com.hdl.vivado.catalog.VivadoCommandCatalog
+
 object PredefinedCommandLibrary {
 
     private fun param(name: String, type: ParameterType, required: Boolean, desc: String, default: Any? = null) =
@@ -8,6 +11,24 @@ object PredefinedCommandLibrary {
     private fun str(n: String, req: Boolean, desc: String) = param(n, ParameterType.STRING, req, desc)
     private fun strd(n: String, desc: String, def: String) = param(n, ParameterType.STRING, false, desc, def)
     private fun int(n: String, req: Boolean, desc: String, def: Int? = null) = param(n, ParameterType.INT, req, desc, def)
+
+    // A command answered from plugin-local data instead of by Vivado. The tclGenerator can
+    // never fire (VivaMcpServer checks localHandler first), so it is wired to fail loudly
+    // rather than silently sending something to the Tcl bridge.
+    private fun local(
+        id: String,
+        name: String,
+        description: String,
+        parameters: List<CommandParameter>,
+        handler: (Map<String, Any>) -> String
+    ) = PredefinedCommand(
+        id = id,
+        name = name,
+        description = description,
+        parameters = parameters,
+        tclGenerator = { error("$id is answered locally and is never sent to Vivado") },
+        localHandler = handler
+    )
 
     val commands: List<PredefinedCommand> = listOf(
 
@@ -422,6 +443,110 @@ object PredefinedCommandLibrary {
             tclGenerator = { args ->
                 val jobs = args["jobs"]?.toString() ?: "8"
                 "launch_runs impl_1 -to_step write_bitstream -jobs $jobs"
+            }
+        ),
+
+        // -------------------------------------------------------------------------
+        // Gateway to the full UG835 Tcl reference (~770 commands).
+        //
+        // Those commands are NOT tools: their names, summaries and syntax come to about
+        // 37k tokens, which would swamp a client's context on one tools/list call. They
+        // live in VivadoCommandCatalog as data and are reached through these three tools,
+        // so the tool list stays around 30 entries no matter how large the reference gets.
+        // -------------------------------------------------------------------------
+
+        local(
+            id = "searchVivadoCommands",
+            name = "Search Vivado Commands",
+            description = "Search the full Vivado Tcl command reference (UG835, ~770 commands) by " +
+                "keyword. Returns matching command names with a one-line summary and their " +
+                "categories. Use this whenever the task needs a Vivado command that is not already " +
+                "one of the tools above — then describeVivadoCommand for its syntax and " +
+                "runVivadoCommand to execute it. Works with or without a running Vivado session.",
+            parameters = listOf(
+                str("query", true, "Keywords to match against command name, summary and category, e.g. 'pblock' or 'bd cell'"),
+                str("category", false, "Restrict to one UG835 category, e.g. Project, Timing, IPIntegrator, Report"),
+                strd("scope", "'default' hides rarely-used commands; 'all' searches every documented command", "default"),
+                int("limit", false, "Maximum results to return (1-100)", 20)
+            )
+        ) { args ->
+            val query = args["query"]?.toString().orEmpty()
+            val category = args["category"]?.toString()?.takeIf { it.isNotBlank() }
+            val includeAll = args["scope"]?.toString()?.trim()?.equals("all", ignoreCase = true) == true
+            val limit = (args["limit"]?.toString()?.trim()?.toIntOrNull() ?: 20).coerceIn(1, 100)
+
+            val hits = VivadoCommandCatalog.search(query, category, includeAll)
+            if (hits.isEmpty()) {
+                buildString {
+                    append("No Vivado commands match '$query'")
+                    if (category != null) append(" in category '$category'")
+                    append(". Try fewer or different keywords")
+                    if (!includeAll) append(", or scope=all to include rarely-used commands")
+                    append(".")
+                }
+            } else buildString {
+                hits.take(limit).forEach { appendLine(it.toLine()) }
+                if (hits.size > limit) {
+                    appendLine("... and ${hits.size - limit} more; narrow the query or raise limit (max 100).")
+                }
+                if (!includeAll) appendLine("(Rarely-used commands were hidden; pass scope=all to include them.)")
+                append("Use describeVivadoCommand for full syntax, runVivadoCommand to execute.")
+            }
+        },
+
+        local(
+            id = "describeVivadoCommand",
+            name = "Describe Vivado Command",
+            description = "Return the full UG835 reference entry for one Vivado Tcl command: syntax, " +
+                "every argument with its description, the long description and worked examples. " +
+                "Call this before runVivadoCommand when the exact flags matter. " +
+                "Works with or without a running Vivado session.",
+            parameters = listOf(
+                str("name", true, "Exact command name, e.g. create_clock, resize_pblock, report_timing")
+            )
+        ) { args ->
+            val name = args["name"]?.toString()?.trim().orEmpty()
+            VivadoCommandCatalog.details(name)?.let { "$name\n\n$it" } ?: buildString {
+                append("'$name' is not in the UG835 Vivado Tcl command reference.")
+                val near = VivadoCommandCatalog.closestNames(name)
+                if (near.isNotEmpty()) append(" Did you mean: ${near.joinToString(", ")}?")
+                append(" Use searchVivadoCommands to find the right name.")
+            }
+        },
+
+        PredefinedCommand(
+            id = "runVivadoCommand",
+            name = "Run Any Vivado Command",
+            description = "Execute any command from the UG835 Vivado Tcl reference (~770 commands) — " +
+                "anything the tools above do not already cover. The command name is checked against " +
+                "the reference and the argument string is validated, so this is not arbitrary Tcl: " +
+                "no ';', no line breaks, no '\$' variables, no backslashes, and '[...]' substitution " +
+                "is limited to read-only queries (get_*, all_*, current_*, list, lindex, expr, ...). " +
+                "Find command names with searchVivadoCommands and exact flags with describeVivadoCommand.",
+            parameters = listOf(
+                str("command", true, "Vivado command name from the UG835 reference, e.g. resize_pblock"),
+                str("args", false, "Arguments exactly as they follow the command name, e.g. \"-period 10 [get_ports clk]\"")
+            ),
+            tclGenerator = { args ->
+                val name = args["command"]?.toString()?.trim().orEmpty()
+                if (name.isEmpty()) error("command is required")
+
+                // Pinning the head word to a documented command is what keeps exec, source,
+                // eval and file structurally out of reach here.
+                val entry = VivadoCommandCatalog.byName(name) ?: run {
+                    val near = VivadoCommandCatalog.closestNames(name)
+                    val hint = if (near.isEmpty()) "" else " Did you mean: ${near.joinToString(", ")}?"
+                    error("'$name' is not in the UG835 Vivado Tcl command reference.$hint " +
+                        "Use searchVivadoCommands to find the right name.")
+                }
+
+                val rest = args["args"]?.toString()?.trim().orEmpty()
+                TclArgSanitizer.reject(rest)?.let { reason ->
+                    error("$reason. runVivadoCommand runs one checked command; " +
+                        "multi-command scripts need runTclRaw, which requires the raw-Tcl permission.")
+                }
+
+                if (rest.isEmpty()) entry.name else "${entry.name} $rest"
             }
         )
     )

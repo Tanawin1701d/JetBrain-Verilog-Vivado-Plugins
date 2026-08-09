@@ -298,7 +298,24 @@ class VivaCoTermPanel(private val project: Project) : Disposable {
                 addActionListener { showCommandDialog(cmd) }
             })
         }
+        // The palette above is the curated shortlist; the browser is the whole UG835
+        // reference, so the person watching can reach everything the AI can.
+        menu.addSeparator()
+        menu.add(JMenuItem("Browse Vivado Commands…").apply {
+            addActionListener { showCommandBrowser() }
+        })
         menu.show(anchor, 0, anchor.height)
+    }
+
+    // Put the chosen command name in the input field rather than running it: the arguments
+    // are the part that matters, and they should be typed deliberately.
+    private fun showCommandBrowser() {
+        val dialog = VivadoCommandBrowserDialog(project)
+        if (!dialog.showAndGet()) return
+        val command = dialog.selectedCommand ?: return
+        inputField.text = "$command "
+        inputField.requestFocusInWindow()
+        inputField.caretPosition = inputField.text.length
     }
 
     private fun showCommandDialog(cmd: com.hdl.vivado.PredefinedCommand) {

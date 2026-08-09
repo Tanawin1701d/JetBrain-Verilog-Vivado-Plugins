@@ -1,5 +1,6 @@
 package com.hdl.mcp
 
+import com.hdl.vivado.PredefinedCommandLibrary
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -95,13 +96,18 @@ class McpConnectionInfoDialog(
     """.trimIndent()
 
     private fun buildHtml(): String {
+        // Counted from the library rather than written out, so the numbers cannot drift
+        // from what tools/list actually serves.
+        val allTools = PredefinedCommandLibrary.commands.size
+        val safeTools = allTools - PredefinedCommandLibrary.rawTclToolIds.size
+
         val rawTclNote = if (rawTclEnabled) {
             "<p style='color:#d9534f;'><b>Raw Tcl is ENABLED</b> for this session — the assistant " +
-                "can execute arbitrary Tcl, including file-system and process access. All 27 tools " +
+                "can execute arbitrary Tcl, including file-system and process access. All $allTools tools " +
                 "are visible to it.</p>"
         } else {
             "<p style='color:#4a8f4a;'><b>Raw Tcl is disabled</b> for this session. The assistant " +
-                "sees 25 tools; <code>runTclRaw</code> and <code>runTclScript</code> are hidden and " +
+                "sees $safeTools tools; <code>runTclRaw</code> and <code>runTclScript</code> are hidden and " +
                 "will be refused if called.</p>"
         }
 
@@ -151,6 +157,11 @@ class McpConnectionInfoDialog(
               <li>Ask the assistant to list its tools first — it should see the Vivado commands
                   (<code>createProject</code>, <code>runSynthesis</code>,
                   <code>generateBitstream</code>, &hellip;).</li>
+              <li>Anything those tools do not cover is still reachable: the assistant searches the
+                  full Vivado Tcl reference with <code>searchVivadoCommands</code>, reads the syntax
+                  with <code>describeVivadoCommand</code>, and runs it with
+                  <code>runVivadoCommand</code> — checked against the reference, so it works even
+                  with raw Tcl disabled.</li>
               <li>Everything the assistant runs is echoed into this console as an
                   <code>[AI]</code> line <i>before</i> it executes, so you can watch it work.</li>
             </ul>
